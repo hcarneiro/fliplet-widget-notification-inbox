@@ -45,9 +45,19 @@
   line-height: 1.5;
 }
 
-[data-notification-inbox-1-0-0-id] .notifications .fa-spinner {
+[data-notification-inbox-1-0-0-id] .notifications .fa-spinner,
+[data-notification-inbox-1-0-0-id] .load-more .fa-spinner {
   opacity: 0.2;
   margin: 0 auto;
+  display: block;
+}
+
+[data-notification-inbox-1-0-0-id] .load-more .fa-spinner,
+[data-notification-inbox-1-0-0-id] .load-more [data-load-more].loading {
+  display: none;
+}
+
+[data-notification-inbox-1-0-0-id] .load-more [data-load-more].loading + .fa-spinner {
   display: block;
 }
 

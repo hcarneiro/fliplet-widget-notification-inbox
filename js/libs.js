@@ -2,9 +2,6 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
 
   var BATCH_SIZE = 20;
   var $container = $(element);
-  var src = {
-    'yo': '<div class="yes">new available</div>'
-  };
 
   var instance = Fliplet.Notifications.init({
     batchSize: BATCH_SIZE,
@@ -20,35 +17,58 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     }
   });
   var notifications = [];
-  var updates = [];
+  var newNotifications = [];
   var unreadCount = 0;
+  var $loadMore;
+
+  var update;
 
   function hasNotifications() {
-    return !!$container.find('.notifications .notification').length
+    return !!$container.find('.notifications .notification').length;
   }
 
-  function addNotification(notification) {
+  function addNotification(notification, options) {
+    options = options || {};
+
+    if (notification.id === 3) {
+      update = notification;
+    }
+
+    if (!notification.isFirstBatch && !options.forceAdd) {
+      newNotifications.push(notification);
+      if ($('.yes').length) {
+        return;
+      }
+
+      $container.append(Fliplet.Widget.Templates['templates.newNotifications']());
+      return;
+    }
+
     var tpl = Handlebars.compile(Fliplet.Widget.Templates['templates.notification']());
     var html = tpl(notification);
     var index = -1;
+
     notifications.push(notification);
     notifications = _.orderBy(notifications, ['createdAt'], ['desc']);
+    index = _.findIndex(notifications, { id: notification.id });
 
     if (!hasNotifications()) {
       // No notifications on the page
       $container.find('.notifications').html(html);
-      return;
-    }
-
-    index = _.findIndex(notifications, { id: notification.id });
-
-    if (index === 0) {
+    } else if (index === 0) {
+      // Notification goes to the beginning
       $container.find('.notifications').prepend(html);
-      return;
-    } else if (index === notifications.length) {
+    } else if (index === notifications.length - 1) {
+      // Notification goes to the end
       $container.find('.notifications').append(html);
     } else {
+      // Notification goes to the middle acc. index
       $container.find('.notifications .notification').eq(index).before(html);
+    }
+
+    if (options.addLoadMore && !$('.load-more').length) {
+      $loadMore = $(Fliplet.Widget.Templates['templates.loadMore']());
+      $container.find('.notifications').after($loadMore);
     }
   }
 
@@ -85,23 +105,15 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     $container[unreadCount ? 'addClass' : 'removeClass']('notifications-has-unread');
   }
 
-  function processNotification(notification, forceProcess) {
-    if (!notification.isFirstBatch && !forceProcess) {
-      updates.push(notification);
-      if ($('.yes').length) {
-        return;
-      }
-
-      $container.append(src.yo);
-      return;
-    }
-
+  function processNotification(notification) {
     if (notification.isDeleted) {
       deleteNotification(notification);
     } else if (notification.isUpdate) {
       updateNotification(notification);
     } else {
-      addNotification(notification);
+      addNotification(notification, {
+        addLoadMore: true
+      });
     }
 
     updateUnreadCount();
@@ -111,27 +123,28 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     if (!Array.isArray(ids)) {
       ids = _.compact([ids]);
     }
-    instance.markNotificationsAsRead(ids);
+    return instance.markNotificationsAsRead(ids);
   }
 
   function markAllAsRead() {
-    var ids = $('.notification.notification-unread[data-notification-id]').map(function () {
-      return $(this).data('notificationId');
-    });
-    markAsRead(_.compact(ids));    
+    return instance.markNotificationsAsRead('all');
   }
 
-  function applyUpdates() {
-    while (updates.length) {
-      update = updates.shift();
-      processNotification(update, true);
+  function addNewNotifications() {
+    while (newNotifications.length) {
+      notification = newNotifications.shift();
+      addNotification(notification, {
+        forceAdd: true
+      });
     }
   }
 
-  function loadMore() {
+  function loadMore(target) {
     if (instance.isPolling()) {
       return;
     }
+
+    var $target = $(target).addClass('loading');
 
     return instance.poll({
       limit: BATCH_SIZE,
@@ -141,11 +154,28 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
         }
       }
     }).then(function (notifications) {
+      $(target).removeClass('loading');
       if (!notifications.length) {
-        // @TODO No more to load
+        $loadMore.remove();
       }
     }).catch(function (err) {
-      // @TODO Error polling for new
+      $(target).removeClass('loading');
+      var actions = [];
+      var message = Fliplet.parseError(err);
+      if (message) {
+        actions.push({
+          label: 'Detail',
+          action: function () {
+            Fliplet.UI.Toast({
+              message: message
+            });
+          }
+        });
+      }
+      Fliplet.UI.Toast({
+        message: 'Error loading notifications',
+        actions: actions
+      });
     });        
   }
 
@@ -160,38 +190,16 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       })
       .on('click', '[data-load-more]', function (e) {
         e.preventDefault();
-        loadMore();
+        loadMore(this);
       })
       .on('click', '.yes', function (e) {
         e.preventDefault();
-        applyUpdates();
+        addNewNotifications();
       });
   }
 
   attachObservers();
   instance.stream(processNotification);
 
-  // Fliplet.Hooks.on('onNotificationUpdate', function (data) {
-  //   parseUpdate(data);
-
-  //   // Show 'new' UI
-  //   if ($('.yes').length) {
-  //     return;
-  //   }
-
-  //   var html = tpl['yo']();
-  //   $container.find('.notifications').append(html);
-  //   $('.yes').on('click', function (e) {
-  //     e.preventDefault();
-  //     var html = tpl['notifications'](data.notifications);
-  //     $('.items-holder').append(html);
-  //     $('.yes').remove();
-  //   });
-  // });
-
-  return {
-    bar: function () {
-      // A public function
-    }
-  }
+  return {};
 });
