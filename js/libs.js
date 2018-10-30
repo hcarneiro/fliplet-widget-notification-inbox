@@ -3,6 +3,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
   var BATCH_SIZE = 20;
 
   var $container = $(element);
+  var $notifications = $container.find('.notifications');
   var instance = Fliplet.Notifications.init({
     batchSize: BATCH_SIZE,
     onFirstResponse: function (err, notifications) {
@@ -53,7 +54,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
         return;
       }
 
-      $container.find('.notifications').prepend(Fliplet.Widget.Templates['templates.newNotifications']());
+      $notifications.prepend(Fliplet.Widget.Templates['templates.newNotifications']());
       return;
     }
 
@@ -67,21 +68,21 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
 
     if (!hasNotifications()) {
       // No notifications on the page
-      $container.find('.notifications').html(html);
+      $notifications.html(html);
     } else if (index === 0) {
       // Notification goes to the beginning
-      $container.find('.notifications').prepend(html);
+      $notifications.prepend(html);
     } else if (index === notifications.length - 1) {
       // Notification goes to the end
-      $container.find('.notifications').append(html);
+      $notifications.append(html);
     } else {
       // Notification goes to the middle acc. index
-      $container.find('.notifications .notification').eq(index).before(html);
+      $notifications.find('.notification').eq(index).before(html);
     }
 
     if (options.addLoadMore && !$loadMore) {
       $loadMore = $(Fliplet.Widget.Templates['templates.loadMore']());
-      $container.find('.notifications').after($loadMore);
+      $notifications.after($loadMore);
     }
   }
 
