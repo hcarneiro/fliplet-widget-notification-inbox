@@ -7,15 +7,34 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     batchSize: BATCH_SIZE,
     onFirstResponse: function (err, notifications) {
       if (err) {
-        // @TODO Error loading data
+        var message = Fliplet.parseError(err);
+        var actions = [];
+        $('.notifications').html(Fliplet.Widget.Templates['templates.notificationsError']());
+
+        if (message) {
+          actions.push({
+            label: 'Detail',
+            action: function () {
+              Fliplet.UI.Toast({
+                message: message
+              });
+            }
+          });
+        }
+
+        Fliplet.UI.Toast({
+          message: 'Error loading notifications',
+          actions: actions
+        });
         return;
       }
 
       if (!notifications.length) {
-        // @TODO No notifications found
+        $('.notifications').html(Fliplet.Widget.Templates['templates.noNotifications']());
       }
     }
   });
+
   var notifications = [];
   var newNotifications = [];
   var unreadCount = 0;
@@ -30,11 +49,11 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
 
     if (!notification.isFirstBatch && !options.forceAdd) {
       newNotifications.push(notification);
-      if ($('.yes').length) {
+      if ($('.notifications-new').length) {
         return;
       }
 
-      $container.append(Fliplet.Widget.Templates['templates.newNotifications']());
+      $container.find('.notifications').prepend(Fliplet.Widget.Templates['templates.newNotifications']());
       return;
     }
 
@@ -60,7 +79,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       $container.find('.notifications .notification').eq(index).before(html);
     }
 
-    if (options.addLoadMore && !$('.load-more').length) {
+    if (options.addLoadMore && !$loadMore) {
       $loadMore = $(Fliplet.Widget.Templates['templates.loadMore']());
       $container.find('.notifications').after($loadMore);
     }
@@ -115,8 +134,20 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
 
   function markAsRead(ids) {
     if (!Array.isArray(ids)) {
-      ids = _.compact([ids]);
+      ids = [ids];
     }
+    ids = _.uniq(_.compact(ids));
+
+    var arr = [];
+    _.forEach(notifications, function (n) {
+      if (ids.indexOf(n.id) < 0) {
+        return;
+      }
+
+      arr.push(n);
+    });
+    ids = arr;
+
     return instance.markNotificationsAsRead(ids);
   }
 
@@ -131,7 +162,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
         forceAdd: true
       });
     }
-    $('.yes').remove();
+    $('.notifications-new').remove();
   }
 
   function loadMore(target) {
@@ -145,13 +176,14 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       limit: BATCH_SIZE,
       where: {
         createdAt: {
-          $lt: _.findLast(notifications).createdAt
+          $lt: _.max(_.map(notifications, 'createdAt'))
         }
       }
     }).then(function (notifications) {
       $(target).removeClass('loading');
       if (!notifications.length) {
         $loadMore.remove();
+        $loadMore = null;
       }
     }).catch(function (err) {
       $(target).removeClass('loading');
@@ -187,7 +219,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
         e.preventDefault();
         loadMore(this);
       })
-      .on('click', '.yes', function (e) {
+      .on('click', '.notifications-new', function (e) {
         e.preventDefault();
         addNewNotifications();
       });

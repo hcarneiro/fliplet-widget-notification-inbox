@@ -24,6 +24,27 @@
   display: none;
 }
 
+[data-notification-inbox-1-0-0-id] .notifications .notifications-new {
+  position: relative;
+  width: 100%;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px 0px rgba(0, 0, 0, 0.1);
+  margin-bottom: 40px;
+  padding: 20px;
+  cursor: pointer;
+  text-align: center;
+  background: #337ab7;
+  color: #fff;
+}
+
+[data-notification-inbox-1-0-0-id] .no-notifications,
+[data-notification-inbox-1-0-0-id] .notifications-error {
+  margin-bottom: 40px;
+  padding: 20px;
+  text-align: center;
+  opacity: 0.5;  
+}
+
 [data-notification-inbox-1-0-0-id].notifications-has-unread .toolbar-read-all {
   display: inline;
 }
