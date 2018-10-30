@@ -1,8 +1,8 @@
 Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
 
   var BATCH_SIZE = 20;
-  var $container = $(element);
 
+  var $container = $(element);
   var instance = Fliplet.Notifications.init({
     batchSize: BATCH_SIZE,
     onFirstResponse: function (err, notifications) {
@@ -20,7 +20,6 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
   var newNotifications = [];
   var unreadCount = 0;
   var $loadMore;
-
   var update;
 
   function hasNotifications() {
@@ -30,8 +29,10 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
   function addNotification(notification, options) {
     options = options || {};
 
-    if (notification.id === 3) {
+    if (notification.id === 3 && !options.fakedUpdate) {
+      notification.isFirstBatch = false;
       update = notification;
+      return;
     }
 
     if (!notification.isFirstBatch && !options.forceAdd) {
@@ -134,9 +135,11 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     while (newNotifications.length) {
       notification = newNotifications.shift();
       addNotification(notification, {
-        forceAdd: true
+        forceAdd: true,
+        fakedUpdate: true
       });
     }
+    $('.yes').remove();
   }
 
   function loadMore(target) {
@@ -200,6 +203,12 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
 
   attachObservers();
   instance.stream(processNotification);
+
+  setTimeout(function () {
+    addNotification(update, {
+      fakedUpdate: true
+    });
+  }, 1000);
 
   return {};
 });
