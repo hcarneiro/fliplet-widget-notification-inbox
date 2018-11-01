@@ -1,6 +1,6 @@
 Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
 
-  var BATCH_SIZE = 2;
+  var BATCH_SIZE = 20;
 
   var $container = $(element);
   var $notifications = $container.find('.notifications');
@@ -19,6 +19,10 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     return !n.readStatus;
   }
 
+  function getUnreadCountFromUI() {
+    return Math.max(0, parseInt($('.unread-count').text(), 10) || 0);
+  }
+
   function addNotification(notification, options) {
     options = options || {};
 
@@ -29,8 +33,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       }
 
       $notifications.prepend(Fliplet.Widget.Templates['templates.newNotifications']());
-      debugger;
-      updateUnreadCount(_.filter(notifications, isUnread).length + _.filter(newNotifications, isUnread).length);
+      updateUnreadCount(getUnreadCountFromUI() + _.filter(newNotifications, isUnread).length);
       return;
     }
 
@@ -81,6 +84,9 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       return n.id === notification.id;
     });
     $('[data-notification-id="' + notification.id + '"]').remove();
+    if (!notification.readStatus) {
+      updateUnreadCount(getUnreadCountFromUI() - 1);
+    }
   }
 
   function updateUnreadCount(count) {
@@ -114,6 +120,8 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     ids = _.uniq(_.compact(ids));
 
     var arr = [];
+    var newUnreadCount;
+
     _.forEach(notifications, function (n) {
       if (ids.indexOf(n.id) < 0) {
         return;
@@ -121,14 +129,15 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
 
       arr.push(n);
     });
-    var newUnreadCount = Math.max(0, parseInt($('.unread-count').text(), 10) - arr.length);
 
     return instance.markNotificationsAsRead(arr)
-      .then(function () {
+      .then(function (results) {
         var selector = _.map(arr, function (n) {
           return '[data-notification-id="' + n.id + '"]'
         }).join(',');;
         $notifications.find(selector).removeClass('notification-unread').addClass('notification-read').find('.notification-badge').remove();
+
+        newUnreadCount = Math.max(0, getUnreadCountFromUI() - results.affected);
         return appNotifications.saveUpdates({
           unreadCount: newUnreadCount
         });
