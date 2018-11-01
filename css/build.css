@@ -8,6 +8,10 @@
   cursor: pointer;
 }
 
+[data-notification-inbox-1-0-0-id] .notification[data-notification-status="draft"] {
+  background-color: rgba(252, 248, 227, 0.58);
+}
+
 [data-notification-inbox-1-0-0-id] .toolbar-read-all {
   display: none;
 }
