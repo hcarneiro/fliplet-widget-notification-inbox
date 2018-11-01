@@ -1,0 +1,10 @@
+.fl-widget-provider {
+  border: 0;
+  width: 100%;
+  background-color: transparent;
+}
+
+.form-horizontal {
+  overflow: hidden;
+  padding: 15px;
+}

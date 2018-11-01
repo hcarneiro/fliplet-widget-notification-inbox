@@ -19,7 +19,7 @@ this["Fliplet"]["Widget"]["Templates"]["templates.notification"] = Handlebars.te
 },"useData":true});
 
 this["Fliplet"]["Widget"]["Templates"]["templates.notifications.toolbar"] = Handlebars.template({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
-    return "<p>{{count}} unread <span class=\"toolbar-read-all\">(<a data-read-all href=\"#\">Mark all as read</a>)</span></p>\n";
+    return "<p><span class=\"unread-count\">{{count}}</span> unread <span class=\"toolbar-read-all\">(<a data-read-all href=\"#\">Mark all as read</a>)</span></p>\n";
 },"useData":true});
 
 this["Fliplet"]["Widget"]["Templates"]["templates.notificationsError"] = Handlebars.template({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {

@@ -1,6 +1,6 @@
 {
-  "name": "notification-inbox",
-  "package": "notification-inbox",
+  "name": "Notification inbox",
+  "package": "com.fliplet.notificationInbox",
   "version": "1.0.0",
   "icon": "img/icon.png",
   "tags": ["type:component", "category:general"],
@@ -13,6 +13,7 @@
       "fliplet-studio-ui"
     ],
     "assets": [
+      "css/interface.css",
       "js/interface.js"
     ]
   },

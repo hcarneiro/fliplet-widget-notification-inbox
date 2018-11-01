@@ -3,16 +3,10 @@ Fliplet().then(function () {
 
   $(window).on('resize', Fliplet.Widget.autosize);
 
-  if (!_.hasIn(data, 'heading')) {
-    $('#heading').val('Notifications');
-  }
-
   $('form').submit(function (event) {
     event.preventDefault();
 
-    Fliplet.Widget.save({
-      heading: $('#heading').val()
-    }).then(function () {
+    Fliplet.Widget.save({}).then(function () {
       Fliplet.Widget.complete();
     });
   });
@@ -21,4 +15,6 @@ Fliplet().then(function () {
   Fliplet.Widget.onSaveRequest(function () {
     $('form').submit();
   });
+
+  Fliplet.API.request('v1/widget-instances/com.fliplet.notifications/interface?appId=' + Fliplet.Env.get('appId'));
 });
