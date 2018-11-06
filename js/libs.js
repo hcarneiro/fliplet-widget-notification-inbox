@@ -96,12 +96,22 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     }
   }
 
+  function removeUnreadCountToolbar() {
+    $container.find('.notifications-toolbar').html('&nbsp;');
+  }
+
   function updateUnreadCount(count) {
+    if (!count) {
+      removeUnreadCountToolbar();
+      return;
+    }
+
     $container[count ? 'addClass' : 'removeClass']('notifications-has-unread');
     var tpl = Handlebars.compile(Fliplet.Widget.Templates['templates.notifications.toolbar']());
     var html = tpl({
       count: count
     });
+
     $container.find('.notifications-toolbar').html(html);
   }
 
@@ -240,7 +250,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
 
   function noNotificationsFound() {
     $('.notifications').html(Fliplet.Widget.Templates['templates.noNotifications']());
-    $('.notifications-toolbar').remove();
+    updateUnreadCount(0);
   }
 
   function attachObservers() {
