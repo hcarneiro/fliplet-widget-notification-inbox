@@ -85,7 +85,9 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     $('[data-notification-id="' + notification.id + '"]').replaceWith(html);
   }
 
-  function deleteNotification(notification) {
+  function deleteNotification(notification, options) {
+    options = options || {};
+
     if (notification.isFirstBatch) {
       // A deleted notification as part of the first batch will be ignored as it hasn't been cached to the notifications array nor rendered yet
       return;
@@ -96,13 +98,11 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     });
     $('[data-notification-id="' + notification.id + '"]').remove();
 
-    if (!notification.readStatus) {
-      updateUnreadCount(getUnreadCountFromUI() - 1);
-    }
+    debouncedCheckForUpdates();
   }
 
   function removeUnreadCountToolbar() {
-    $container.find('.notifications-toolbar').html('&nbsp;');
+    $container.find('.notifications-toolbar').empty().hide();
   }
 
   function updateUnreadCount(count) {
@@ -117,7 +117,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       count: count
     });
 
-    $container.find('.notifications-toolbar').html(html);
+    $container.find('.notifications-toolbar').html(html).show();
   }
 
   function processNotification(notification, options) {
