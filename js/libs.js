@@ -91,7 +91,6 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     });
     $('[data-notification-id="' + notification.id + '"]').remove();
 
-    // @TODO Does deleting a notification need to update the unread count on the page?
     if (!notification.readStatus) {
       updateUnreadCount(getUnreadCountFromUI() - 1);
     }
