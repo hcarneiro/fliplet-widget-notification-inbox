@@ -4,16 +4,11 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
 
   var $container = $(element);
   var $notifications = $container.find('.notifications');
-  var instance;
 
   var notifications = [];
   var newNotifications = [];
   var $loadMore;
   var appNotifications;
-
-  function hasNotifications() {
-    return !!$container.find('.notifications .notification').length;
-  }
 
   function isUnread(n) {
     return !n.readStatus;
@@ -23,18 +18,29 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     return Math.max(0, parseInt($('.unread-count').text(), 10) || 0);
   }
 
+  function debouncedCheckForUpdates() {
+    return _.debounce(function () {
+      return appNotifications.checkForUpdates(Date.now());
+    }, 200, {
+      leading: true
+    });
+  }
+
   function addNotification(notification, options) {
     options = options || {};
 
-    if (!notification.isFirstBatch && !options.forceRender) {
-      newNotifications.push(notification);
-      if ($('.notifications-new').length) {
+    if (!notification.isFirstBatch) {
+      debouncedCheckForUpdates();
+
+      if (!options.forceRender) {
+        newNotifications.push(notification);
+        if ($('.notifications-new').length) {
+          return;
+        }
+
+        $notifications.prepend(Fliplet.Widget.Templates['templates.newNotifications']());
         return;
       }
-
-      $notifications.prepend(Fliplet.Widget.Templates['templates.newNotifications']());
-      updateUnreadCount(getUnreadCountFromUI() + _.filter(newNotifications, isUnread).length);
-      return;
     }
 
     var tpl = Handlebars.compile(Fliplet.Widget.Templates['templates.notification']());
@@ -45,7 +51,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     notifications = _.orderBy(notifications, ['createdAt'], ['desc']);
     index = _.findIndex(notifications, { id: notification.id });
 
-    if (!hasNotifications()) {
+    if (notifications.length === 1) {
       // No notifications on the page
       $notifications.html(html);
     } else if (index === 0) {
@@ -84,6 +90,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       return n.id === notification.id;
     });
     $('[data-notification-id="' + notification.id + '"]').remove();
+
     if (!notification.readStatus) {
       updateUnreadCount(getUnreadCountFromUI() - 1);
     }
@@ -114,13 +121,14 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
   }
 
   function markAsRead(ids) {
+    var arr = [];
+    var affected;
+    var unreadCount;
+
     if (!Array.isArray(ids)) {
       ids = [ids];
     }
     ids = _.uniq(_.compact(ids));
-
-    var arr = [];
-    var newUnreadCount;
 
     _.forEach(notifications, function (n) {
       if (ids.indexOf(n.id) < 0) {
@@ -130,33 +138,27 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       arr.push(n);
     });
 
-    return instance.markNotificationsAsRead(arr)
+    return appNotifications.markAsRead(arr)
       .then(function (results) {
-        var selector = _.map(arr, function (n) {
-          return '[data-notification-id="' + n.id + '"]'
-        }).join(',');;
+        var selector = _.map(ids, function (id) {
+          return '[data-notification-id="' + id + '"]'
+        }).join(',');
+
+        // Update rendered notifications
         $notifications.find(selector).removeClass('notification-unread').addClass('notification-read').find('.notification-badge').remove();
 
-        newUnreadCount = Math.max(0, getUnreadCountFromUI() - results.affected);
-        return appNotifications.saveUpdates({
-          unreadCount: newUnreadCount
-        });
-      })
-      .then(function () {
-        updateUnreadCount(newUnreadCount);
+        // Update unread count
+        updateUnreadCount(results.unreadCount);
       });
   }
 
   function markAllAsRead() {
-    return instance.markNotificationsAsRead('all')
+    return appNotifications.markAllAsRead()
       .then(function () {
+        // Update rendered notifications
         $notifications.find('.notification-unread').removeClass('notification-unread').addClass('notification-read').find('.notification-badge').remove();
-        return appNotifications.saveUpdates({
-          unreadCount: 0,
-          clearNewCount: true
-        });        
-      })
-      .then(function () {
+
+        // Update unread count
         updateUnreadCount(0);
       });
   }
@@ -172,13 +174,13 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
   }
 
   function loadMore(target) {
-    if (instance.isPolling()) {
+    if (appNotifications.isPolling()) {
       return;
     }
 
     var $target = $(target).addClass('loading');
 
-    return instance.poll({
+    return appNotifications.poll({
       limit: BATCH_SIZE,
       where: {
         createdAt: {
@@ -186,19 +188,19 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
         }
       },
       publishToStream: false
-    }).then(function (notifications) {
+    }).then(function (results) {
       $(target).removeClass('loading');
-      if (!notifications || !notifications.entries) {
+      if (!results || !results.entries) {
         return;
       }
 
-      if (!notifications.entries.length) {
+      if (!results.entries.length) {
         $loadMore.remove();
         $loadMore = null;
         return;
       }
 
-      notifications.entries.forEach(function (notification) {
+      results.entries.forEach(function (notification) {
         processNotification(notification, {
           forceRender: true
         });
@@ -221,7 +223,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
         message: 'Error loading notifications',
         actions: actions
       });
-    });        
+    });
   }
 
   function parseNotificationAction(id) {
@@ -236,13 +238,48 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     });
   }
 
+  function noNotificationsFound() {
+    $('.notifications').html(Fliplet.Widget.Templates['templates.noNotifications']());
+    $('.notifications-toolbar').remove();
+  }
+
   function attachObservers() {
-    Fliplet.Hooks.on('notificationsUpdated', function (data) {
+    Fliplet.Hooks.on('notificationFirstResponse', function (err, notifications) {
+      if (err) {
+        var message = Fliplet.parseError(err);
+        var actions = [];
+        $('.notifications').html(Fliplet.Widget.Templates['templates.notificationsError']());
+
+        if (message) {
+          actions.push({
+            label: 'Detail',
+            action: function () {
+              Fliplet.UI.Toast({
+                message: message
+              });
+            }
+          });
+        }
+
+        Fliplet.UI.Toast({
+          message: 'Error loading notifications',
+          actions: actions
+        });
+        return;
+      }
+
+      if (!notifications.length) {
+        noNotificationsFound();
+      }
+    });
+    Fliplet.Hooks.on('notificationStream', processNotification);
+
+    Fliplet.Hooks.on('notificationCountsUpdated', function (data) {
       updateUnreadCount(data.unreadCount);
     });
 
     $container
-      .on('click', '.notification[data-notification-id]', function () {
+      .on('click', '.notification.notification-unread[data-notification-id]', function () {
         var id = $(this).data('notificationId');
         markAsRead(id);
         parseNotificationAction(id);
@@ -261,14 +298,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       });
   }
 
-  function noNotificationsFound() {
-    $('.notifications').html(Fliplet.Widget.Templates['templates.noNotifications']());
-    $('.notifications-toolbar').remove();    
-  }
-
   function init() {
-    attachObservers();
-
     moment.updateLocale('en', {
       calendar : {
         sameElse: 'MMMM Do YYYY'
@@ -276,48 +306,16 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     });
 
     appNotifications = Fliplet.Widget.get('Notifications');
-
-    instance = Fliplet.Notifications.init({
-      batchSize: BATCH_SIZE,
-      onFirstResponse: function (err, notifications) {
-        if (err) {
-          var message = Fliplet.parseError(err);
-          var actions = [];
-          $('.notifications').html(Fliplet.Widget.Templates['templates.notificationsError']());
-
-          if (message) {
-            actions.push({
-              label: 'Detail',
-              action: function () {
-                Fliplet.UI.Toast({
-                  message: message
-                });
-              }
-            });
-          }
-
-          Fliplet.UI.Toast({
-            message: 'Error loading notifications',
-            actions: actions
-          });
-          return;
-        }
-
-        if (!notifications.length) {
-          noNotificationsFound();
-        }
-      }
-    });
-    instance.stream(processNotification);
-    instance.unread.count()
-      .then(function (count) {
-        updateUnreadCount(count);
-        appNotifications.saveUpdates({
-          unreadCount: count,
-          newCount: 0
-        });
+    if (appNotifications) {
+      // Initializa Notifications app component
+      appNotifications.init({
+        clearNewCountOnUpdate: true,
+        startCheckingUpdates: true
       });
+    }
   }
+
+  attachObservers();
 
   return {
     init: init
