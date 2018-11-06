@@ -86,6 +86,11 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
   }
 
   function deleteNotification(notification) {
+    if (notification.isFirstBatch) {
+      // A deleted notification as part of the first batch will be ignored as it hasn't been cached to the notifications array nor rendered yet
+      return;
+    }
+
     _.remove(notifications, function(n) {
       return n.id === notification.id;
     });
