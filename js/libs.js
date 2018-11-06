@@ -277,7 +277,6 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
 
     Fliplet.Hooks.on('notificationCountsUpdated', function (data) {
       updateUnreadCount(data.unreadCount);
-      appNotifications.clearNewCount();
     });
 
     $container
