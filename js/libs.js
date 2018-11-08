@@ -20,6 +20,10 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
 
   function debouncedCheckForUpdates() {
     return _.debounce(function () {
+      if (!appNotifications) {
+        return Promise.reject('Notifications add-on is not configured');
+      }
+
       return appNotifications.checkForUpdates(Date.now());
     }, 200, {
       leading: true
@@ -153,6 +157,10 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       arr.push(n);
     });
 
+    if (!appNotifications) {
+      return Promise.reject('Notifications add-on is not configured');
+    }
+
     return appNotifications.markAsRead(arr)
       .then(function (results) {
         var selector = _.map(ids, function (id) {
@@ -168,6 +176,10 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
   }
 
   function markAllAsRead() {
+    if (!appNotifications) {
+      return Promise.reject('Notifications add-on is not configured');
+    }
+
     return appNotifications.markAllAsRead()
       .then(function () {
         // Update rendered notifications
@@ -189,8 +201,12 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
   }
 
   function loadMore(target) {
+    if (!appNotifications) {
+      return Promise.reject('Notifications add-on is not configured');
+    }
+
     if (appNotifications.isPolling()) {
-      return;
+      return Promise.resolve();
     }
 
     var $target = $(target).addClass('loading');
