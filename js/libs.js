@@ -310,10 +310,11 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     });
 
     $container
-      .on('click', '.notification.notification-unread[data-notification-id]', function () {
+      .on('click', '.notification[data-notification-id]', function () {
         var id = $(this).data('notificationId');
-        markAsRead(id);
-        parseNotificationAction(id);
+        markAsRead(id).then(function () {
+          parseNotificationAction(id);
+        });
       })
       .on('click', '[data-read-all]', function (e) {
         e.preventDefault();
