@@ -102,6 +102,10 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     });
     $('[data-notification-id="' + notification.id + '"]').remove();
 
+    if (!notifications.length) {
+      noNotificationsFound();
+    }
+
     debouncedCheckForUpdates();
   }
 
@@ -299,7 +303,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
         return;
       }
 
-      if (!notifications.length) {
+      if (!_.filter(notifications, { deletedAt: null }).length) {
         noNotificationsFound();
       }
     });
