@@ -7,7 +7,7 @@ this["Fliplet"]["Widget"]["Templates"]["templates.loadMore"] = Handlebars.templa
 },"useData":true});
 
 this["Fliplet"]["Widget"]["Templates"]["templates.newNotifications"] = Handlebars.template({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
-    return "<div class=\"notifications-new\">New</div>";
+    return "<div class=\"notifications-new btn-primary\">New</div>";
 },"useData":true});
 
 this["Fliplet"]["Widget"]["Templates"]["templates.noNotifications"] = Handlebars.template({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
