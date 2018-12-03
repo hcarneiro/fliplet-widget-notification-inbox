@@ -11,7 +11,7 @@ this["Fliplet"]["Widget"]["Templates"]["templates.newNotifications"] = Handlebar
 },"useData":true});
 
 this["Fliplet"]["Widget"]["Templates"]["templates.noNotifications"] = Handlebars.template({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
-    return "<div class=\"no-notifications\">\n  <h3>No notifications yet</h3>\n  <p>Check again later for updates about your app</p>\n</div>";
+    return "<div class=\"no-notifications\">\n  <h3>No notifications yet</h3>\n  <p>Check again later for updates</p>\n</div>";
 },"useData":true});
 
 this["Fliplet"]["Widget"]["Templates"]["templates.notification"] = Handlebars.template({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
