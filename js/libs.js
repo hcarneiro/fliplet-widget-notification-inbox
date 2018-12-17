@@ -348,8 +348,10 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
           category: 'notification_inbox',
           action: 'push_notification_info'
         });
+
         Fliplet.User.getSubscriptionId().then(function (id) {
           var actions = [];
+
           if (!id) {
             actions.push({
               label: 'Subscribe',
@@ -358,10 +360,13 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
                   category: 'notification_inbox',
                   action: 'push_notification_subscribe'
                 });
+
                 var pushWidget = Fliplet.Widget.get('PushNotifications');
+
                 if (!pushWidget) {
                   return;
                 }
+
                 pushWidget.ask().then(function (subscriptionId) {
                   Fliplet.UI.Toast({
                     type: 'regular',
@@ -372,6 +377,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
                 }).catch(function (error) {
                   var message = Fliplet.parseError(error);
                   var actions = [];
+
                   if (message) {
                     actions.push({
                       label: 'Details',
@@ -382,6 +388,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
                       }
                     });
                   }
+
                   Fliplet.UI.Toast({
                     message: 'Error subscribing to push notifications',
                     actions: actions
