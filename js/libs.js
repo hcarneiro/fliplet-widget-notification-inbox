@@ -226,6 +226,12 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
         return;
       }
 
+      Fliplet.Analytics.trackEvent({
+        category: 'notification_inbox',
+        action: 'load_more',
+        value: results.entries.length
+      });
+
       if (!results.entries.length) {
         $loadMore.remove();
         $loadMore = null;
@@ -313,12 +319,20 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     $container
       .on('click', '.notification[data-notification-id]', function () {
         var id = $(this).data('notificationId');
+        Fliplet.Analytics.trackEvent({
+          category: 'notification_inbox',
+          action: 'notification_open'
+        });
         markAsRead(id).then(function () {
           parseNotificationAction(id);
         });
       })
       .on('click', '[data-read-all]', function (e) {
         e.preventDefault();
+        Fliplet.Analytics.trackEvent({
+          category: 'notification_inbox',
+          action: 'notification_read_all'
+        });
         markAllAsRead();
       })
       .on('click', '[data-load-more]', function (e) {
@@ -330,12 +344,20 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
         addNewNotifications();
       })
       .on('click', '[data-settings]', function () {
+        Fliplet.Analytics.trackEvent({
+          category: 'notification_inbox',
+          action: 'push_notification_info'
+        });
         Fliplet.User.getSubscriptionId().then(function (id) {
           var actions = [];
           if (!id) {
             actions.push({
               label: 'Subscribe',
               action: function () {
+                Fliplet.Analytics.trackEvent({
+                  category: 'notification_inbox',
+                  action: 'push_notification_subscribe'
+                });
                 var pushWidget = Fliplet.Widget.get('PushNotifications');
                 if (!pushWidget) {
                   return;

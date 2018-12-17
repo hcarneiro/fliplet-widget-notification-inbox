@@ -14,3 +14,9 @@ Fliplet.Widget.instance('notification-inbox-1-0-0', function (data) {
     return Promise.reject();
   });
 });
+
+Fliplet.Analytics.trackEvent({
+  category: 'notification_inbox',
+  action: 'inbox_visit',
+  nonInteraction: true
+});
