@@ -109,23 +109,20 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     debouncedCheckForUpdates();
   }
 
-  function removeUnreadCountToolbar() {
-    $container.find('.notifications-toolbar').empty().hide();
-  }
-
   function updateUnreadCount(count) {
     if (!count) {
-      removeUnreadCountToolbar();
+      $container.removeClass('notifications-has-unread');
+      $container.find('.notifications-toolbar').html(Fliplet.Widget.Templates['templates.toolbar.empty']());
       return;
     }
 
-    $container[count ? 'addClass' : 'removeClass']('notifications-has-unread');
-    var tpl = Handlebars.compile(Fliplet.Widget.Templates['templates.notifications.toolbar']());
+    var tpl = Handlebars.compile(Fliplet.Widget.Templates['templates.toolbar']());
     var html = tpl({
       count: count
     });
 
-    $container.find('.notifications-toolbar').html(html).show();
+    $container.addClass('notifications-has-unread');
+    $container.find('.notifications-toolbar').html(html);
   }
 
   function processNotification(notification, options) {
@@ -331,6 +328,54 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       .on('click', '.notifications-new', function (e) {
         e.preventDefault();
         addNewNotifications();
+      })
+      .on('click', '[data-settings]', function () {
+        Fliplet.User.getSubscriptionId().then(function (id) {
+          var actions = [];
+          if (!id) {
+            actions.push({
+              label: 'Subscribe',
+              action: function () {
+                var pushWidget = Fliplet.Widget.get('PushNotifications');
+                if (!pushWidget) {
+                  return;
+                }
+                pushWidget.ask().then(function (subscriptionId) {
+                  Fliplet.UI.Toast({
+                    type: 'regular',
+                    title: 'Subscribed to push notifications',
+                    message: 'Subscription ID: ' + subscriptionId,
+                    actions: [{ label: 'OK' }]
+                  });
+                }).catch(function (error) {
+                  var message = Fliplet.parseError(error);
+                  var actions = [];
+                  if (message) {
+                    actions.push({
+                      label: 'Details',
+                      action: function () {
+                        Fliplet.UI.Toast({
+                          html: message
+                        });
+                      }
+                    });
+                  }
+                  Fliplet.UI.Toast({
+                    message: 'Error subscribing to push notifications',
+                    actions: actions
+                  })
+                });
+              }
+            });
+          }
+
+          Fliplet.UI.Toast({
+            type: 'regular',
+            title: 'Push notifications',
+            message: id ? 'Subscription ID: ' + id : 'Subscribe to receive push notifications',
+            actions: actions
+          });
+        })
       });
   }
 
