@@ -24,6 +24,14 @@
   display: none;
 }
 
+[data-notification-inbox-1-0-0-id] .notifications-toolbar [data-settings] {
+  opacity: 0.5;
+}
+
+.platform-web [data-notification-inbox-1-0-0-id] .notifications-toolbar [data-settings] {
+  display: none;
+}
+
 [data-notification-inbox-1-0-0-id] .notifications .notifications-new {
   position: relative;
   width: 100%;
