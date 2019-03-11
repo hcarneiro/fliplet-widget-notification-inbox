@@ -43,14 +43,6 @@
   text-align: center;
 }
 
-.notification-badge {
-  display: none;
-}
-
-[data-notification-inbox-1-0-0-id] .notification-unread .notification-badge {
-  display: block;
-}
-
 [data-notification-inbox-1-0-0-id] .no-notifications,
 [data-notification-inbox-1-0-0-id] .notifications-error {
   margin-bottom: 40px;
