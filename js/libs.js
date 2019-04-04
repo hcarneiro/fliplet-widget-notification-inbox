@@ -192,8 +192,9 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     return appNotifications.markAllAsRead()
       .then(markAllUIAsRead)
       .catch(function (err) {
-        console.warn(err);
-        markAllUIAsRead();
+        Fliplet.UI.Toast.error(err, {
+          message: 'Error marking notifications as read'
+        });
       });
   }
 
