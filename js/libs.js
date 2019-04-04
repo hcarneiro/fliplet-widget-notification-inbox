@@ -176,18 +176,25 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       });
   }
 
+  function markAllUIAsRead() {
+    // Update rendered notifications
+    $notifications.find('.notification-unread').removeClass('notification-unread').addClass('notification-read').find('.notification-badge').remove();
+
+    // Update unread count
+    updateUnreadCount(0);
+  }
+
   function markAllAsRead() {
     if (!appNotifications) {
       return Promise.reject('Notifications add-on is not configured');
     }
 
     return appNotifications.markAllAsRead()
-      .then(function () {
-        // Update rendered notifications
-        $notifications.find('.notification-unread').removeClass('notification-unread').addClass('notification-read').find('.notification-badge').remove();
-
-        // Update unread count
-        updateUnreadCount(0);
+      .then(markAllUIAsRead)
+      .catch(function (err) {
+        Fliplet.UI.Toast.error(err, {
+          message: 'Error marking notifications as read'
+        });
       });
   }
 
@@ -245,21 +252,8 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       });
     }).catch(function (err) {
       $(target).removeClass('loading');
-      var actions = [];
-      var message = Fliplet.parseError(err);
-      if (message) {
-        actions.push({
-          label: 'Detail',
-          action: function () {
-            Fliplet.UI.Toast({
-              message: message
-            });
-          }
-        });
-      }
-      Fliplet.UI.Toast({
-        message: 'Error loading notifications',
-        actions: actions
+      Fliplet.UI.Toast.error(err, {
+        message: 'Error loading notifications'
       });
     });
   }
@@ -284,24 +278,9 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
   function attachObservers() {
     Fliplet.Hooks.on('notificationFirstResponse', function (err, notifications) {
       if (err) {
-        var message = Fliplet.parseError(err);
-        var actions = [];
         $('.notifications').html(Fliplet.Widget.Templates['templates.notificationsError']());
-
-        if (message) {
-          actions.push({
-            label: 'Detail',
-            action: function () {
-              Fliplet.UI.Toast({
-                message: message
-              });
-            }
-          });
-        }
-
-        Fliplet.UI.Toast({
-          message: 'Error loading notifications',
-          actions: actions
+        Fliplet.UI.Toast.error(err, {
+          message: 'Error loading notifications'
         });
         return;
       }
@@ -325,6 +304,9 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
         });
         markAsRead(id).then(function () {
           parseNotificationAction(id);
+        }).catch(function (err) {
+          console.warn(err);
+          parseNotificationAction(id);
         });
       })
       .on('click', '[data-read-all]', function (e) {
@@ -346,65 +328,14 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       .on('click', '[data-settings]', function () {
         Fliplet.Analytics.trackEvent({
           category: 'notification_inbox',
-          action: 'push_notification_info'
+          action: 'notification_settings'
         });
 
-        Fliplet.User.getSubscriptionId().then(function (id) {
-          var actions = [];
+        if (_.hasIn(Fliplet, 'Notifications.Settings.open')) {
+          return Fliplet.Notifications.Settings.open();
+        }
 
-          if (!id) {
-            actions.push({
-              label: 'Subscribe',
-              action: function () {
-                Fliplet.Analytics.trackEvent({
-                  category: 'notification_inbox',
-                  action: 'push_notification_subscribe'
-                });
-
-                var pushWidget = Fliplet.Widget.get('PushNotifications');
-
-                if (!pushWidget) {
-                  return;
-                }
-
-                pushWidget.ask().then(function (subscriptionId) {
-                  Fliplet.UI.Toast({
-                    type: 'regular',
-                    title: 'Subscribed to push notifications',
-                    message: 'Subscription ID: ' + subscriptionId,
-                    actions: [{ label: 'OK' }]
-                  });
-                }).catch(function (error) {
-                  var message = Fliplet.parseError(error);
-                  var actions = [];
-
-                  if (message) {
-                    actions.push({
-                      label: 'Details',
-                      action: function () {
-                        Fliplet.UI.Toast({
-                          html: message
-                        });
-                      }
-                    });
-                  }
-
-                  Fliplet.UI.Toast({
-                    message: 'Error subscribing to push notifications',
-                    actions: actions
-                  })
-                });
-              }
-            });
-          }
-
-          Fliplet.UI.Toast({
-            type: 'regular',
-            title: 'Push notifications',
-            message: id ? 'Subscription ID: ' + id : 'Subscribe to receive push notifications',
-            actions: actions
-          });
-        })
+        Fliplet.App.About.open();
       });
   }
 
@@ -414,6 +345,12 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
         sameElse: 'MMMM Do YYYY'
       }
     });
+
+    // Prompt user to enable notification or subscribe for push notification in the background
+    var pushWidget = Fliplet.Widget.get('PushNotifications');
+    if (pushWidget) {
+      pushWidget.ask();
+    }
 
     appNotifications = Fliplet.Widget.get('Notifications');
     if (appNotifications) {
