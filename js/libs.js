@@ -330,47 +330,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
           action: 'push_notification_info'
         });
 
-        Fliplet.User.getSubscriptionId().then(function (id) {
-          var actions = [];
-
-          if (!id) {
-            actions.push({
-              label: 'Subscribe',
-              action: function () {
-                Fliplet.Analytics.trackEvent({
-                  category: 'notification_inbox',
-                  action: 'push_notification_subscribe'
-                });
-
-                var pushWidget = Fliplet.Widget.get('PushNotifications');
-
-                if (!pushWidget) {
-                  return;
-                }
-
-                pushWidget.ask().then(function (subscriptionId) {
-                  Fliplet.UI.Toast({
-                    type: 'regular',
-                    title: 'Subscribed to push notifications',
-                    message: 'Subscription ID: ' + subscriptionId,
-                    actions: [{ label: 'OK' }]
-                  });
-                }).catch(function (error) {
-                  Fliplet.UI.Toast.error(error, {
-                    message: 'Error subscribing to push notifications'
-                  });
-                });
-              }
-            });
-          }
-
-          Fliplet.UI.Toast({
-            type: 'regular',
-            title: 'Push notifications',
-            message: id ? 'Subscription ID: ' + id : 'Subscribe to receive push notifications',
-            actions: actions
-          });
-        })
+        Fliplet.App.About.open();
       });
   }
 
