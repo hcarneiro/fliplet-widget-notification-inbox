@@ -176,18 +176,24 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       });
   }
 
+  function markAllUIAsRead() {
+    // Update rendered notifications
+    $notifications.find('.notification-unread').removeClass('notification-unread').addClass('notification-read').find('.notification-badge').remove();
+
+    // Update unread count
+    updateUnreadCount(0);
+  }
+
   function markAllAsRead() {
     if (!appNotifications) {
       return Promise.reject('Notifications add-on is not configured');
     }
 
     return appNotifications.markAllAsRead()
-      .then(function () {
-        // Update rendered notifications
-        $notifications.find('.notification-unread').removeClass('notification-unread').addClass('notification-read').find('.notification-badge').remove();
-
-        // Update unread count
-        updateUnreadCount(0);
+      .then(markAllUIAsRead)
+      .catch(function (err) {
+        console.warn(err);
+        markAllUIAsRead();
       });
   }
 
@@ -324,6 +330,9 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
           action: 'notification_open'
         });
         markAsRead(id).then(function () {
+          parseNotificationAction(id);
+        }).catch(function (err) {
+          console.warn(err);
           parseNotificationAction(id);
         });
       })
