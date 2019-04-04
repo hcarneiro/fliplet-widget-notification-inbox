@@ -327,8 +327,12 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       .on('click', '[data-settings]', function () {
         Fliplet.Analytics.trackEvent({
           category: 'notification_inbox',
-          action: 'push_notification_info'
+          action: 'notification_settings'
         });
+
+        if (_.hasIn(Fliplet, 'Notifications.Settings.open')) {
+          return Fliplet.Notifications.Settings.open();
+        }
 
         Fliplet.App.About.open();
       });
