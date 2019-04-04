@@ -251,21 +251,8 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       });
     }).catch(function (err) {
       $(target).removeClass('loading');
-      var actions = [];
-      var message = Fliplet.parseError(err);
-      if (message) {
-        actions.push({
-          label: 'Detail',
-          action: function () {
-            Fliplet.UI.Toast({
-              message: message
-            });
-          }
-        });
-      }
-      Fliplet.UI.Toast({
-        message: 'Error loading notifications',
-        actions: actions
+      Fliplet.UI.Toast.error(err, {
+        message: 'Error loading notifications'
       });
     });
   }
@@ -290,24 +277,9 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
   function attachObservers() {
     Fliplet.Hooks.on('notificationFirstResponse', function (err, notifications) {
       if (err) {
-        var message = Fliplet.parseError(err);
-        var actions = [];
         $('.notifications').html(Fliplet.Widget.Templates['templates.notificationsError']());
-
-        if (message) {
-          actions.push({
-            label: 'Detail',
-            action: function () {
-              Fliplet.UI.Toast({
-                message: message
-              });
-            }
-          });
-        }
-
-        Fliplet.UI.Toast({
-          message: 'Error loading notifications',
-          actions: actions
+        Fliplet.UI.Toast.error(err, {
+          message: 'Error loading notifications'
         });
         return;
       }
@@ -384,24 +356,9 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
                     actions: [{ label: 'OK' }]
                   });
                 }).catch(function (error) {
-                  var message = Fliplet.parseError(error);
-                  var actions = [];
-
-                  if (message) {
-                    actions.push({
-                      label: 'Details',
-                      action: function () {
-                        Fliplet.UI.Toast({
-                          html: message
-                        });
-                      }
-                    });
-                  }
-
-                  Fliplet.UI.Toast({
-                    message: 'Error subscribing to push notifications',
-                    actions: actions
-                  })
+                  Fliplet.UI.Toast.error(error, {
+                    message: 'Error subscribing to push notifications'
+                  });
                 });
               }
             });
