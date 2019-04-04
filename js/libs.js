@@ -381,6 +381,12 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       }
     });
 
+    // Prompt user to enable notification or subscribe for push notification in the background
+    var pushWidget = Fliplet.Widget.get('PushNotifications');
+    if (pushWidget) {
+      pushWidget.ask();
+    }
+
     appNotifications = Fliplet.Widget.get('Notifications');
     if (appNotifications) {
       // Initializa Notifications app component
