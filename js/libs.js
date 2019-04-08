@@ -52,7 +52,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     var index = -1;
 
     notifications.push(notification);
-    notifications = _.orderBy(notifications, ['createdAt'], ['desc']);
+    notifications = _.orderBy(notifications, ['orderAt'], ['desc']);
     index = _.findIndex(notifications, { id: notification.id });
 
     if (notifications.length === 1) {
