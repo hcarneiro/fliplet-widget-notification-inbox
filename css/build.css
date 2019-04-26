@@ -52,7 +52,7 @@
 }
 
 [data-notification-inbox-1-0-0-id].notifications-has-unread .toolbar-read-all {
-  display: inline;
+  display: inline-block;
 }
 
 [data-notification-inbox-1-0-0-id] .notification .subtitle {
