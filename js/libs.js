@@ -17,24 +17,18 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     return Math.max(0, parseInt($('.unread-count').text(), 10) || 0);
   }
 
-  function debouncedCheckForUpdates() {
-    return _.debounce(function () {
-      if (!appNotifications) {
-        return Promise.reject('Notifications add-on is not configured');
-      }
+  function checkForUpdates() {
+    if (!appNotifications) {
+      return Promise.reject('Notifications add-on is not configured');
+    }
 
-      return appNotifications.checkForUpdates(Date.now());
-    }, 200, {
-      leading: true
+    return appNotifications.checkForUpdates({
+      forcePolling: true
     });
   }
 
   function addNotification(notification, options) {
     options = options || {};
-
-    if (!notification.isFirstBatch) {
-      debouncedCheckForUpdates();
-    }
 
     var tpl = Handlebars.compile(Fliplet.Widget.Templates['templates.notification']());
     var html = tpl(notification);
@@ -94,8 +88,6 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     if (!notifications.length) {
       noNotificationsFound();
     }
-
-    debouncedCheckForUpdates();
   }
 
   function updateUnreadCount(count) {
@@ -311,10 +303,13 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
         var $target = $(this);
 
         $target.addClass('fa-spin');
-        appNotifications.checkForUpdates({
-          forcePolling: true
-        }).then(function () {
+        return checkForUpdates().then(function () {
           $target.removeClass('fa-spin');
+        }).catch(function (error) {
+          $target.removeClass('fa-spin');
+          Fliplet.UI.toast.error(error, {
+            message: 'Notification refresh failed'
+          });
         });
       });
   }
