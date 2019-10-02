@@ -6,7 +6,6 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
   var $notifications = $container.find('.notifications');
 
   var notifications = [];
-  var newNotifications = [];
   var $loadMore;
   var appNotifications;
 
@@ -18,34 +17,18 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     return Math.max(0, parseInt($('.unread-count').text(), 10) || 0);
   }
 
-  function debouncedCheckForUpdates() {
-    return _.debounce(function () {
-      if (!appNotifications) {
-        return Promise.reject('Notifications add-on is not configured');
-      }
+  function checkForUpdates() {
+    if (!appNotifications) {
+      return Promise.reject('Notifications add-on is not configured');
+    }
 
-      return appNotifications.checkForUpdates(Date.now());
-    }, 200, {
-      leading: true
+    return appNotifications.checkForUpdates({
+      forcePolling: true
     });
   }
 
   function addNotification(notification, options) {
     options = options || {};
-
-    if (!notification.isFirstBatch) {
-      debouncedCheckForUpdates();
-
-      if (!options.forceRender) {
-        newNotifications.push(notification);
-        if ($('.notifications-new').length) {
-          return;
-        }
-
-        $notifications.prepend(Fliplet.Widget.Templates['templates.newNotifications']());
-        return;
-      }
-    }
 
     var tpl = Handlebars.compile(Fliplet.Widget.Templates['templates.notification']());
     var html = tpl(notification);
@@ -105,8 +88,6 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     if (!notifications.length) {
       noNotificationsFound();
     }
-
-    debouncedCheckForUpdates();
   }
 
   function updateUnreadCount(count) {
@@ -125,17 +106,14 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     $container.find('.notifications-toolbar').html(html);
   }
 
-  function processNotification(notification, options) {
-    options = options || {};
-
+  function processNotification(notification) {
     if (notification.isDeleted) {
       deleteNotification(notification);
     } else if (notification.isUpdate) {
       updateNotification(notification);
     } else {
       addNotification(notification, {
-        addLoadMore: true,
-        forceRender: options.forceRender
+        addLoadMore: true
       });
     }
   }
@@ -198,16 +176,6 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       });
   }
 
-  function addNewNotifications() {
-    while (newNotifications.length) {
-      notification = newNotifications.shift();
-      addNotification(notification, {
-        forceRender: true
-      });
-    }
-    $('.notifications-new').remove();
-  }
-
   function loadMore(target) {
     if (!appNotifications) {
       return Promise.reject('Notifications add-on is not configured');
@@ -246,9 +214,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       }
 
       results.entries.forEach(function (notification) {
-        processNotification(notification, {
-          forceRender: true
-        });
+        processNotification(notification);
       });
     }).catch(function (err) {
       $(target).removeClass('loading');
@@ -321,10 +287,6 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
         e.preventDefault();
         loadMore(this);
       })
-      .on('click', '.notifications-new', function (e) {
-        e.preventDefault();
-        addNewNotifications();
-      })
       .on('click', '[data-settings]', function () {
         Fliplet.Analytics.trackEvent({
           category: 'notification_inbox',
@@ -336,6 +298,19 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
         }
 
         Fliplet.App.About.open();
+      })
+      .on('click', '[data-refresh]', function () {
+        var $target = $(this);
+
+        $target.addClass('fa-spin');
+        return checkForUpdates().then(function () {
+          $target.removeClass('fa-spin');
+        }).catch(function (error) {
+          $target.removeClass('fa-spin');
+          Fliplet.UI.toast.error(error, {
+            message: 'Notification refresh failed'
+          });
+        });
       });
   }
 

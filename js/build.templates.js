@@ -6,10 +6,6 @@ this["Fliplet"]["Widget"]["Templates"]["templates.loadMore"] = Handlebars.templa
     return "<div class=\"load-more\">\n  <button data-load-more class=\"btn btn-link btn-block btn-lg\">Load more</button>\n  <i class=\"fa fa-spinner fa-pulse fa-3x fa-fw\"></i>\n</div>\n";
 },"useData":true});
 
-this["Fliplet"]["Widget"]["Templates"]["templates.newNotifications"] = Handlebars.template({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
-    return "<div class=\"notifications-new btn-primary\">New</div>";
-},"useData":true});
-
 this["Fliplet"]["Widget"]["Templates"]["templates.noNotifications"] = Handlebars.template({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     return "<div class=\"no-notifications\">\n  <h3>No notifications yet</h3>\n  <p>Check again later for updates</p>\n</div>";
 },"useData":true});
@@ -23,9 +19,9 @@ this["Fliplet"]["Widget"]["Templates"]["templates.notificationsError"] = Handleb
 },"useData":true});
 
 this["Fliplet"]["Widget"]["Templates"]["templates.toolbar"] = Handlebars.template({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
-    return "<p><span class=\"unread-count\">{{count}}</span> unread <span class=\"toolbar-read-all\">(<a data-read-all href=\"#\">Mark all as read</a>)</span><i class=\"fa fa-lg fa-fw fa-cog pull-right\" data-settings></i></p>\n";
+    return "<p><span class=\"unread-count\">{{count}}</span> unread <span class=\"toolbar-read-all\">(<a data-read-all href=\"#\">Mark all as read</a>)</span><i class=\"fa fa-lg fa-fw fa-cog pull-right\" data-settings></i><i class=\"fa fa-lg fa-fw fa-refresh pull-right\" data-refresh></i></p>\n";
 },"useData":true});
 
 this["Fliplet"]["Widget"]["Templates"]["templates.toolbar.empty"] = Handlebars.template({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
-    return "<p>&nbsp;<i class=\"fa fa-lg fa-fw fa-cog pull-right\" data-settings></i></p>\n";
+    return "<p>&nbsp;<i class=\"fa fa-lg fa-fw fa-cog pull-right\" data-settings></i><i class=\"fa fa-lg fa-fw fa-refresh pull-right\" data-refresh></i></p>\n";
 },"useData":true});

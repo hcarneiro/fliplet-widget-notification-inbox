@@ -24,8 +24,10 @@
   display: none;
 }
 
-[data-notification-inbox-1-0-0-id] .notifications-toolbar [data-settings] {
+[data-notification-inbox-1-0-0-id] .notifications-toolbar [data-settings],
+[data-notification-inbox-1-0-0-id] .notifications-toolbar [data-refresh] {
   opacity: 0.5;
+  cursor: pointer;
 }
 
 .platform-web [data-notification-inbox-1-0-0-id] .notifications-toolbar [data-settings] {
