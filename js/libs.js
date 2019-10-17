@@ -255,6 +255,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
         noNotificationsFound();
       }
     });
+    
     Fliplet.Hooks.on('notificationStream', processNotification);
 
     Fliplet.Hooks.on('notificationCountsUpdated', function (data) {
@@ -330,6 +331,10 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       pushWidget.ask();
     }
   }
+
+  Fliplet.Hooks.on('afterNotificationsInit', function (instance) {
+    appNotifications = instance;
+  });
 
   attachObservers();
 
