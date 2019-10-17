@@ -307,7 +307,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
           $target.removeClass('fa-spin');
         }).catch(function (error) {
           $target.removeClass('fa-spin');
-          Fliplet.UI.toast.error(error, {
+          Fliplet.UI.Toast.error(error, {
             message: 'Notification refresh failed'
           });
         });
