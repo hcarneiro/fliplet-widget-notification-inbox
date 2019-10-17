@@ -8,10 +8,9 @@ Fliplet.Widget.instance('notification-inbox-1-0-0', function (data) {
 
   // Sample implementation to initialize the widget
   var inbox = new NotificationInbox(element, data);
-  Fliplet.Hooks.on('beforeNotificationsInit', function () {
-    // Initialize Notification Inbox component and stops Notifications app component initialization
-    inbox.init();
-    return Promise.reject();
+  Fliplet.Hooks.on('beforeNotificationsInit', function (instanceData, options) {
+    // Initialize Notification Inbox component
+    inbox.init(options);
   });
 });
 
