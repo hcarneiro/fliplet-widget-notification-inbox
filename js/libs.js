@@ -255,6 +255,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
         noNotificationsFound();
       }
     });
+    
     Fliplet.Hooks.on('notificationStream', processNotification);
 
     Fliplet.Hooks.on('notificationCountsUpdated', function (data) {
@@ -307,35 +308,33 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
           $target.removeClass('fa-spin');
         }).catch(function (error) {
           $target.removeClass('fa-spin');
-          Fliplet.UI.toast.error(error, {
+          Fliplet.UI.Toast.error(error, {
             message: 'Notification refresh failed'
           });
         });
       });
   }
 
-  function init() {
+  function init(options) {
     moment.updateLocale('en', {
       calendar : {
         sameElse: 'MMMM Do YYYY'
       }
     });
 
+    options.clearNewCountOnUpdate = true;
+    options.startCheckingUpdates = true;
+
     // Prompt user to enable notification or subscribe for push notification in the background
     var pushWidget = Fliplet.Widget.get('PushNotifications');
     if (pushWidget) {
       pushWidget.ask();
     }
-
-    appNotifications = Fliplet.Widget.get('Notifications');
-    if (appNotifications) {
-      // Initializa Notifications app component
-      appNotifications.init({
-        clearNewCountOnUpdate: true,
-        startCheckingUpdates: true
-      });
-    }
   }
+
+  Fliplet.Hooks.on('afterNotificationsInit', function (instance) {
+    appNotifications = instance;
+  });
 
   attachObservers();
 
