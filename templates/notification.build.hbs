@@ -1,4 +1,4 @@
-<div class="notification \{{#if readStatus}}notification-read\{{else}}notification-unread\{{/if}}" data-notification-id="\{{id}}" data-notification-status="\{{status}}">
+<div class="notification \{{#if readStatus}}notification-read\{{else}}notification-unread\{{/if}}\{{#if hasLink}} notification-linked\{{/if}}" data-notification-id="\{{id}}" data-notification-status="\{{status}}">
   <div class="subtitle">\{{moment orderAt calendar="null"}}</div>
   \{{#if data.title}}<h2 class="title">\{{data.title}}</h2>\{{/if}}
   \{{#if data.message}}<div class="description">
