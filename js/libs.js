@@ -27,11 +27,17 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     });
   }
 
+  function getNotificationRender(notification) {
+    var tpl = Handlebars.compile(Fliplet.Widget.Templates['templates.notification']());
+
+    notification.hasLink = _.has(notification, 'data.navigate');
+    return tpl(notification);
+  }
+
   function addNotification(notification, options) {
     options = options || {};
 
-    var tpl = Handlebars.compile(Fliplet.Widget.Templates['templates.notification']());
-    var html = tpl(notification);
+    var html = getNotificationRender(notification);
     var index = -1;
 
     notifications.push(notification);
@@ -59,8 +65,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
   }
 
   function updateNotification(notification) {
-    var tpl = Handlebars.compile(Fliplet.Widget.Templates['templates.notification']());
-    var html = tpl(notification);
+    var html = getNotificationRender(notification);
     var index = _.findIndex(notifications, { id: notification.id });
 
     if (index < 0) {
@@ -255,7 +260,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
         noNotificationsFound();
       }
     });
-    
+
     Fliplet.Hooks.on('notificationStream', processNotification);
 
     Fliplet.Hooks.on('notificationCountsUpdated', function (data) {

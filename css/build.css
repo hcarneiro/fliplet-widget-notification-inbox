@@ -63,6 +63,23 @@
   opacity: 0.5;
 }
 
+[data-notification-inbox-1-0-0-id] .notification-linked .subtitle:after {
+  content: '\f0c1';
+  display: inline-block;
+  font: normal normal normal 14px/1 FontAwesome;
+  font-size: inherit;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 1.33333333em;
+  line-height: 0.75em;
+  vertical-align: -15%;
+  margin-left: 5px;
+  width: 1.28571429em;
+  text-align: center;
+  opacity: 0.6;
+}
+
 [data-notification-inbox-1-0-0-id] .notification .title {
   position: relative;
   margin: 10px 0 5px;
