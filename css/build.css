@@ -8,7 +8,7 @@
   border-radius: 20px;
   box-shadow: 0 10px 30px 0px rgba(0, 0, 0, 0.1);
   margin-bottom: 40px;
-  padding: 20px;
+  padding: 20px 15px;
   cursor: pointer;
 }
 
@@ -26,7 +26,7 @@
 
 [data-notification-inbox-1-0-0-id] .notifications-toolbar [data-settings],
 [data-notification-inbox-1-0-0-id] .notifications-toolbar [data-refresh] {
-  opacity: 0.5;
+  opacity: 0.3;
   cursor: pointer;
 }
 
@@ -65,14 +65,18 @@
 
 [data-notification-inbox-1-0-0-id] .notification .title {
   position: relative;
-  margin: 10px 0;
-  font-weight: 600;
-  line-height: 1.3;
+  margin: 10px 0 5px;
+  font-weight: 500;
+  line-height: 1.1;
 }
 
 [data-notification-inbox-1-0-0-id] .notification .description {
   font-size: 16px;
   line-height: 1.5;
+}
+
+[data-notification-inbox-1-0-0-id] .notification .description p {
+  margin-bottom: 0;
 }
 
 [data-notification-inbox-1-0-0-id] .notifications .fa-spinner,
