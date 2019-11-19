@@ -79,6 +79,7 @@
   text-align: center;
   opacity: 0.6;
   float: right;
+  margin-top: 4px;
 }
 
 [data-notification-inbox-1-0-0-id] .notification .title {
