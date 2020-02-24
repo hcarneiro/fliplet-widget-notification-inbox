@@ -217,6 +217,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       publishToStream: false
     }).then(function (results) {
       $(target).removeClass('loading');
+
       if (!results || !results.entries) {
         return;
       }
@@ -274,6 +275,11 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       }
 
       if (!_.filter(notifications, { deletedAt: null }).length) {
+        if (Fliplet.Navigate.get('preview')) {
+          initDemo();
+          return;
+        }
+
         noNotificationsFound();
       }
     });
@@ -337,7 +343,46 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       });
   }
 
+  function initDemo() {
+    var options = {
+      notifications: [{
+        data: {
+          title: 'Reminder',
+          message: 'You need to submit your full year review by tomorrow 2PM. Please speak to your manager if you have any questions.'
+        },
+        orderAt: moment().subtract(1, 'days').add(2, 'hours').valueOf()
+      }, {
+        data: {
+          title: 'Automated message',
+          message: 'It has been 14 days since you last emailed your pipeline contacts.'
+        },
+        orderAt: moment().subtract(8, 'days').valueOf()
+      }, {
+        data: {
+          title: 'Excellence in Marketing',
+          message: 'We have been awarded the prestigious "Excellent in Marketing" award by the National Marketing Association.'
+        },
+        orderAt: moment().subtract(1, 'month').valueOf()
+      }]
+    };
+
+    Fliplet.Hooks.run('beforeShowDemoNotifications', options).then(function () {
+      $container.addClass('demo');
+      _.forEach(options.notifications, function (notification, i) {
+        notification.id = i + 1;
+
+        if (i === 0) {
+          notification.isLastNotification = true;
+        }
+
+        processNotification(notification);
+      });
+    });
+  }
+
   function init(options) {
+    options = options || {};
+
     Fliplet.Studio.emit('get-selected-widget');
 
     moment.updateLocale('en', {
@@ -346,11 +391,14 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       }
     });
 
-    options.clearNewCountOnUpdate = true;
-    options.startCheckingUpdates = true;
+    if (options.mode === 'demo') {
+      initDemo();
+      return;
+    }
 
     // Prompt user to enable notification or subscribe for push notification in the background
     var pushWidget = Fliplet.Widget.get('PushNotifications');
+
     if (pushWidget) {
       pushWidget.ask();
     }
