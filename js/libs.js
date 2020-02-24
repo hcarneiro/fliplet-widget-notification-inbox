@@ -6,8 +6,9 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
   var $notifications = $container.find('.notifications');
 
   var notifications = [];
-  var $loadMore;
+  var $loadMore = $([]);
   var appNotifications;
+  var isLastNotificationLoaded = false;
 
   function isUnread(n) {
     return !n.readStatus;
@@ -58,7 +59,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       $notifications.find('.notification').eq(index).before(html);
     }
 
-    if (options.addLoadMore && !$loadMore) {
+    if (options.addLoadMore && !$loadMore.length && !isLastNotificationLoaded) {
       $loadMore = $(Fliplet.Widget.Templates['templates.loadMore']());
       $notifications.after($loadMore);
     }
@@ -112,6 +113,12 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
   }
 
   function processNotification(notification) {
+    if (notification.isLastNotification) {
+      isLastNotificationLoaded = true;
+      $loadMore.remove();
+      $loadMore = $([]);
+    }
+
     if (notification.isDeleted) {
       deleteNotification(notification);
     } else if (notification.isUpdate) {
@@ -213,8 +220,9 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       });
 
       if (!results.entries.length) {
+        isLastNotificationLoaded = true;
         $loadMore.remove();
-        $loadMore = null;
+        $loadMore = $([]);
         return;
       }
 
