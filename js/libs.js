@@ -63,6 +63,8 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       $loadMore = $(Fliplet.Widget.Templates['templates.loadMore']());
       $notifications.after($loadMore);
     }
+
+    Fliplet.Studio.emit('get-selected-widget');
   }
 
   function updateNotification(notification) {
@@ -76,6 +78,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
 
     notifications[index] = notification;
     $('[data-notification-id="' + notification.id + '"]').replaceWith(html);
+    Fliplet.Studio.emit('get-selected-widget');
   }
 
   function deleteNotification(notification, options) {
@@ -90,6 +93,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       return n.id === notification.id;
     });
     $('[data-notification-id="' + notification.id + '"]').remove();
+    Fliplet.Studio.emit('get-selected-widget');
 
     if (!notifications.length) {
       noNotificationsFound();
@@ -252,6 +256,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
   function noNotificationsFound() {
     $('.notifications').html(Fliplet.Widget.Templates['templates.noNotifications']());
     updateUnreadCount(0);
+    Fliplet.Studio.emit('get-selected-widget');
   }
 
   function attachObservers() {
@@ -329,6 +334,8 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
   }
 
   function init(options) {
+    Fliplet.Studio.emit('get-selected-widget');
+
     moment.updateLocale('en', {
       calendar : {
         sameElse: 'MMMM Do YYYY'
