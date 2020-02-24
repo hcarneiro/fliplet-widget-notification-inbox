@@ -275,7 +275,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       }
 
       if (!_.filter(notifications, { deletedAt: null }).length) {
-        if (Fliplet.Navigate.get('preview')) {
+        if (Fliplet.Env.get('preview')) {
           initDemo();
           return;
         }
