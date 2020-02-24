@@ -123,6 +123,10 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       $loadMore = $([]);
     }
 
+    if (notification.status === 'draft') {
+      return;
+    }
+
     if (notification.isDeleted) {
       deleteNotification(notification);
     } else if (notification.isUpdate) {
