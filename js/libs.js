@@ -288,7 +288,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       }
 
       if (!_.filter(notifications, function (notification) {
-        return !notification.deletedAt || notification.status === 'draft';
+        return !notification.deletedAt && notification.status !== 'draft';
       }).length) {
         if (Fliplet.App.isPreview(true)) {
           // The app is running in Fliplet Viewer or Fliplet Studio
