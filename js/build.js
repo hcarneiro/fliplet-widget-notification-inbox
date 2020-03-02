@@ -9,13 +9,15 @@ Fliplet.Widget.instance('notification-inbox-1-0-0', function (data) {
   // Sample implementation to initialize the widget
   var inbox = new NotificationInbox(element, data);
 
-  if (!Fliplet.Registry.get('fliplet-widget-notifications:1.0:core')) {
-    // Notifications add-on isn't available
-    // Initialize inbox in demo mode
-    inbox.init({
-      mode: 'demo'
-    });
-  }
+  Fliplet().then(function () {
+    if (!Fliplet.Registry.get('fliplet-widget-notifications:1.0:core')) {
+      // Notifications add-on isn't available
+      // Initialize inbox in demo mode
+      inbox.init({
+        mode: 'demo'
+      });
+    }
+  });
 
   Fliplet.Hooks.on('beforeNotificationsInit', function (appComponentData, options) {
     options.clearNewCountOnUpdate = true;
