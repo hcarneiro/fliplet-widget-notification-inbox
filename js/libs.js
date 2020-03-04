@@ -278,33 +278,35 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
   }
 
   function attachObservers() {
-    Fliplet.Hooks.on('notificationFirstResponse', function (err, notifications) {
-      if (err) {
-        $('.notifications').html(Fliplet.Widget.Templates['templates.notificationsError']());
-        Fliplet.UI.Toast.error(err, {
-          message: 'Error loading notifications'
-        });
-        return;
-      }
-
-      if (!_.filter(notifications, function (notification) {
-        return !notification.deletedAt && notification.status !== 'draft';
-      }).length) {
-        if (Fliplet.App.isPreview(true)) {
-          // The app is running in Fliplet Viewer or Fliplet Studio
-          initDemo();
+    if (data.mode !== 'demo') {
+      Fliplet.Hooks.on('notificationFirstResponse', function (err, notifications) {
+        if (err) {
+          $('.notifications').html(Fliplet.Widget.Templates['templates.notificationsError']());
+          Fliplet.UI.Toast.error(err, {
+            message: 'Error loading notifications'
+          });
           return;
         }
 
-        noNotificationsFound();
-      }
-    });
+        if (!_.filter(notifications, function (notification) {
+          return !notification.deletedAt && notification.status !== 'draft';
+        }).length) {
+          if (Fliplet.App.isPreview(true)) {
+            // The app is running in Fliplet Viewer or Fliplet Studio
+            initDemo();
+            return;
+          }
 
-    Fliplet.Hooks.on('notificationStream', processNotification);
+          noNotificationsFound();
+        }
+      });
 
-    Fliplet.Hooks.on('notificationCountsUpdated', function (data) {
-      updateUnreadCount(data.unreadCount);
-    });
+      Fliplet.Hooks.on('notificationStream', processNotification);
+
+      Fliplet.Hooks.on('notificationCountsUpdated', function (data) {
+        updateUnreadCount(data.unreadCount);
+      });
+    }
 
     $container
       .on('click', '.notification[data-notification-id]', function () {
@@ -382,19 +384,25 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
       }]
     };
 
+    _.forEach(options.notifications, function (notification, i) {
+      if (i === 0) {
+        notification.isLastNotification = true;
+      } else {
+        notification.readStatus = true;
+      }
+    });
+
     isDemoMode = true;
     Fliplet.Hooks.run('beforeShowDemoNotifications', options).then(function () {
       $container.addClass('demo');
       _.forEach(options.notifications, function (notification, i) {
         notification.id = i + 1;
-        notification.readStatus = true;
-
-        if (i === 0) {
-          notification.isLastNotification = true;
-        }
 
         processNotification(notification);
       });
+      updateUnreadCount(_.filter(notifications, function (notification) {
+        return !notification.readStatus;
+      }).length);
     });
   }
 
@@ -411,6 +419,11 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
 
     if (options.mode === 'demo') {
       initDemo();
+      return;
+    }
+
+    if (options.mode === 'empty') {
+      noNotificationsFound();
       return;
     }
 
