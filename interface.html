@@ -1,15 +1,40 @@
-<form class="form-horizontal">
-  <header>
-    <p>Configure your notification inbox</p>
-    <a href="https://help.fliplet.com/article/177" target="_blank">Need help?</a>
-  </header>
-
-  <div class="row">
-    <div class="col-sm-4">
-      <label for="heading">Instructions</label>
-    </div>
-    <div class="col-sm-8">
-      <p>Go to <strong>Publish &gt; Notifications</strong> to manage and send notifications to the notification inbox via the <strong>In-app notifications</strong> tab.</p>
+<div class="interface-container loading">
+  <div class="loading-holder">
+    <div class="spinner-holder animated">
+      <div class="spinner-overlay">Loading...</div>
+      <p>Loading...</p>
     </div>
   </div>
-</form>
+
+  <form class="form-horizontal">
+    <header>
+      <p>Configure your notification inbox</p>
+      <a href="https://help.fliplet.com/article/177" target="_blank">Need help?</a>
+    </header>
+
+    <div class="form-group">
+      <div class="col-sm-4">
+        <label for="heading">Send notifications to your users</label>
+      </div>
+      <div class="col-sm-8">
+        <p><a href="#" class="btn btn-primary manage-notifications">Manage notifications</a></p>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="col-sm-4">
+        <label for="heading">Show sample notifications</label>
+      </div>
+      <div class="col-sm-8">
+        <div class="checkbox checkbox-icon">
+          <input type="checkbox" id="show_demo">
+          <label for="show_demo">
+            <span class="check"><i class="fa fa-check"></i></span> Enable
+          </label>
+        </div>
+        <p class="help-block">Sample notifications are only displayed in Fliplet Studio and Fliplet Viewer.</p>
+      </div>
+    </div>
+  </form>
+
+</div>

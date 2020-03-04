@@ -8,3 +8,23 @@
   overflow: hidden;
   padding: 15px;
 }
+
+.interface-container.loading .form-horizontal {
+  display: none;
+}
+
+.loading-holder {
+  display: none;
+  text-align: center;
+  position: fixed;
+  top: 67px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding-top: 20%;
+  z-index: 1;
+}
+
+.interface-container.loading .loading-holder {
+  display: block;
+}
