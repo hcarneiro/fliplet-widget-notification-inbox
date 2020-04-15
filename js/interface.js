@@ -15,6 +15,13 @@ function attachObservers() {
   // Update Studio interface labels
   $(window).on('resize', Fliplet.Widget.autosize);
 
+  // Toggle save button after notifications overlay closes
+  window.addEventListener('message', function(event) {
+    if (event.data.event === 'overlay-close') {
+      Fliplet.Widget.resetSaveButtonLabel();
+    }
+  });
+
   // Fired from Fliplet Studio when the external save button is clicked
   Fliplet.Widget.onSaveRequest(function () {
     return saveWidget();
