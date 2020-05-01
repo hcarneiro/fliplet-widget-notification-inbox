@@ -40,7 +40,12 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
     options = options || {};
 
     var html = getNotificationRender(notification);
-    var index = -1;
+    var index = _.findIndex(notifications, { id: notification.id });
+
+    if (index > -1) {
+      updateNotification(notification);
+      return;
+    }
 
     notifications.push(notification);
     notifications = _.orderBy(notifications, ['orderAt'], ['desc']);
