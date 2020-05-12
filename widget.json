@@ -25,7 +25,8 @@
     ],
     "appAssets": [
       "js/app/libs.js",
-      "js/app/build.js"
+      "js/app/build.js",
+      "css/app/build.css"
     ],
     "assets": [
       "css/build.css",
