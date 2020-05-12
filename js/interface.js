@@ -44,9 +44,6 @@ function attachObservers() {
 function init() {
   var data = Fliplet.Widget.getData() || {};
 
-  // Activate Nofifications app component
-  Fliplet.API.request('v1/widget-instances/com.fliplet.notifications/interface?appId=' + Fliplet.Env.get('appId'));
-
   // Restore form data
   $('#show_demo').prop('checked', data.mode === 'demo');
 

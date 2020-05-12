@@ -17,14 +17,6 @@ Fliplet.Widget.instance('notification-inbox-1-0-0', function (data) {
       });
       return;
     }
-
-    if (!Fliplet.Registry.get('fliplet-widget-notifications:1.0:core')) {
-      // Notifications add-on isn't available
-      // Initialize inbox as empty
-      inbox.init({
-        mode: 'empty'
-      });
-    }
   });
 
   Fliplet.Hooks.on('beforeNotificationsInit', function (appComponentData, options) {
