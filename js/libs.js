@@ -283,7 +283,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function (element, data) {
   }
 
   function attachObservers() {
-    if (data.mode !== 'demo') {
+    if (data.mode !== 'demo' || !Fliplet.App.isPreview(true)) {
       Fliplet.Hooks.on('notificationFirstResponse', function (err, notifications) {
         if (err) {
           $('.notifications').html(Fliplet.Widget.Templates['templates.notificationsError']());
