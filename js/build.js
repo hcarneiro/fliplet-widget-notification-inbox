@@ -25,6 +25,8 @@ Fliplet.Widget.instance('notification-inbox-1-0-0', function (data) {
     }, function onFetchData() {
       return Fliplet.Session.set({
         appNotificationsSeenAt: Math.floor(Date.now() / 1000) // current timestamp in seconds
+      }, {
+        required: true
       });
     });
   });
