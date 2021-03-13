@@ -1,4 +1,4 @@
-Fliplet.Registry.set('notification-inbox:1.0:app:core', function (data) {
+Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
   var BATCH_SIZE = 20;
 
   var storageKey = 'flAppNotifications';
@@ -7,7 +7,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function (data) {
   var clearNewCountOnUpdate = false;
   var timer;
   var instanceReady;
-  var instancePromise = new Promise(function (resolve) {
+  var instancePromise = new Promise(function(resolve) {
     instanceReady = resolve;
   });
 
@@ -20,32 +20,40 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function (data) {
       storage.clearedAt = Date.now();
     }
 
-    if (data.hasOwnProperty('unreadCount')) {
+    if (typeof data.unreadCount !== 'undefined') {
       storage.unreadCount = Math.max(0, parseInt(data.unreadCount, 10) || 0);
     }
 
-    if (data.hasOwnProperty('newCount')) {
-      storage.newCount = Math.max(0, Math.min(storage.unreadCount, parseInt(data.newCount, 10) || 0));
+    if (typeof data.newCount !== 'undefined') {
+      storage.newCount = Math.max(
+        0,
+        Math.min(storage.unreadCount, parseInt(data.newCount, 10) || 0)
+      );
     }
 
     return Fliplet.App.Storage.set(storageKey, storage);
   }
 
   function markAsRead(notifications) {
+    var affected;
+    var unreadCount;
+
     return instance.markNotificationsAsRead(notifications)
-      .then(function (results) {
+      .then(function(results) {
         results = results || {};
         affected = results.affected || 0;
+
         return instance.unread.count();
       })
-      .then(function (value) {
+      .then(function(value) {
         unreadCount = value;
+
         return saveCounts({
           unreadCount: unreadCount,
           newCount: 0
         });
       })
-      .then(function () {
+      .then(function() {
         return Promise.resolve({
           affected: affected,
           unreadCount: unreadCount
@@ -55,16 +63,18 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function (data) {
 
   function markAllAsRead() {
     var affected;
+
     return instance.markNotificationsAsRead('all')
-      .then(function (results) {
+      .then(function(results) {
         results = results || {};
         affected = results.affected || 0;
+
         return saveCounts({
           unreadCount: 0,
           newCount: 0
         });
       })
-      .then(function () {
+      .then(function() {
         return Promise.resolve({
           affected: affected,
           unreadCount: 0
@@ -87,6 +97,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function (data) {
       $('.add-notification-badge')
         .removeClass('has-notification-badge')
         .find('.notification-badge').remove();
+
       return;
     }
 
@@ -127,7 +138,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function (data) {
     opt = opt || {};
 
     return getNewNotifications(ts)
-      .then(function (counts) {
+      .then(function(counts) {
         var data = {
           updatedAt: Date.now(),
           unreadCount: counts[1],
@@ -145,7 +156,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function (data) {
       })
       .then(addNotificationBadges)
       .then(broadcastCountUpdates)
-      .then(function () {
+      .then(function() {
         if (!countsUpdated && !opt.forcePolling) {
           return Promise.resolve();
         }
@@ -172,13 +183,13 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function (data) {
   }
 
   function attachObservers() {
-    Fliplet.Hooks.on('pushNotification', function () {
+    Fliplet.Hooks.on('pushNotification', function() {
       setTimer(0);
     });
   }
 
   function getInstance() {
-    return instancePromise.then(function () {
+    return instancePromise.then(function() {
       return instance;
     });
   }
@@ -196,24 +207,24 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function (data) {
     return Fliplet.App.Storage.get(storageKey, {
       defaults: defaults
     })
-      .then(function (value) {
+      .then(function(value) {
         storage = value;
 
         instance = Fliplet.Notifications.init({
           batchSize: BATCH_SIZE,
           scope: data.scope,
-          onFirstResponse: function (err, notifications) {
+          onFirstResponse: function(err, notifications) {
             Fliplet.Hooks.run('notificationFirstResponse', err, notifications);
           }
         });
         instanceReady();
 
-        instance.stream(function (notification) {
+        instance.stream(function(notification) {
           Fliplet.Hooks.run('notificationStream', notification);
         });
 
-        Fliplet().then(function () {
-          setTimeout(function () {
+        Fliplet().then(function() {
+          setTimeout(function() {
             // Adding a timeout to allow page JS to modify page DOM first
             addNotificationBadges();
             broadcastCountUpdates();
