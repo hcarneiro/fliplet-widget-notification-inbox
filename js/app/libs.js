@@ -31,6 +31,24 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
       );
     }
 
+    var appSettings = Fliplet.Env.get('appSettings');
+
+    switch (appSettings.notificationsBadgeType) {
+      case 'unread':
+        if (typeof storage.unreadCount === 'number') {
+          Fliplet.Navigator.Notifications.setBadgeNumber(storage.unreadCount);
+        }
+
+        break;
+      case 'new':
+      default:
+        if (typeof storage.newCount === 'number') {
+          Fliplet.Navigator.Notifications.setBadgeNumber(storage.newCount);
+        }
+
+        break;
+    }
+
     return Fliplet.App.Storage.set(storageKey, storage);
   }
 
