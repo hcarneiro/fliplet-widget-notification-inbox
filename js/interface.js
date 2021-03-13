@@ -1,9 +1,9 @@
-function saveWidget(options) {
+function saveWidget() {
   return Fliplet.Widget.save({
     mode: $('#show_demo').prop('checked') ? 'demo' : null
-  }).then(function () {
+  }).then(function() {
     return Fliplet.Widget.complete();
-  }).catch(function (error) {
+  }).catch(function(error) {
     Fliplet.Modal.alert({
       title: 'Error saving widget',
       message: Fliplet.parseError(error)
@@ -23,11 +23,11 @@ function attachObservers() {
   });
 
   // Fired from Fliplet Studio when the external save button is clicked
-  Fliplet.Widget.onSaveRequest(function () {
+  Fliplet.Widget.onSaveRequest(function() {
     return saveWidget();
   });
 
-  $('.manage-notifications').on('click', function (e) {
+  $('.manage-notifications').on('click', function(e) {
     e.preventDefault();
     Fliplet.Studio.emit('overlay', {
       name: 'notifications',
