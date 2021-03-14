@@ -17,6 +17,9 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
 
     return appNotifications.checkForUpdates({
       forcePolling: true
+    }).then(function() {
+      // Update timestamp when app notifications are last loaded
+      appNotifications.setAppNotificationSeenAt({ force: true });
     });
   }
 
@@ -437,8 +440,8 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
     // Notifications have loaded
     appNotifications = instance;
 
-    var appSettings = Fliplet.Env.get('appSettings');
-    var forceUpdate = appSettings.notificationsBadgeType !== 'unread' && counts.newCount > 0;
+    var notificationsBadgeType = Fliplet.Env.get('appSettings').notificationsBadgeType;
+    var forceUpdate = notificationsBadgeType !== 'unread' && counts.newCount > 0;
 
     // Update session with the timestamp the notifications were last seen
     // Ignore throttling if the notification badge count is based on new notifications

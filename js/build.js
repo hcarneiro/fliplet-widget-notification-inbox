@@ -20,7 +20,6 @@ Fliplet.Widget.instance('notification-inbox-1-0-0', function(data) {
     }
 
     options.clearNewCountOnUpdate = true;
-    options.startCheckingUpdates = true;
 
     // Initialize Notification Inbox component
     inbox.init();
