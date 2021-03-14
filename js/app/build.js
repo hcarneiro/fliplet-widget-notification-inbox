@@ -8,11 +8,11 @@ Fliplet().then(function() {
     var data = { scope: scope };
 
     Fliplet.Hooks.run('beforeNotificationsInit', data, options).then(function() {
-      var notifications = new Notifications(data);
+      var instance = new Notifications(data);
 
-      notifications.init(options);
-
-      Fliplet.Hooks.run('afterNotificationsInit', notifications);
+      instance.init(options).then(function(counts) {
+        Fliplet.Hooks.run('afterNotificationsInit', instance, counts);
+      });
     });
   });
 });

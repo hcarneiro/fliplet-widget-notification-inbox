@@ -125,6 +125,44 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
       .append('<div class="notification-badge">' + count + '</div>');
   }
 
+  /**
+   * Updates the session with the latest timestamp that the notifications were seen
+   * @param {Object} options - A mapping of options for the function
+   * @param {Number} options.seenAt - Timestamp in seconds. Defaults to current timestamp if falsey
+   * @param {Boolean} options.force - If true, throttling is disabled
+   * @returns {Promise} The promise resolves when the session data is updated, taking throttling into consideration
+   */
+  function setAppNotificationSeenAt(options) {
+    options = options || {};
+
+    // Default to current timestamp in seconds
+    if (!options.seenAt) {
+      options.seenAt = Math.floor(Date.now() / 1000);
+    }
+
+    // Update appNotificationsSeenAt immediately
+    if (options.force) {
+      return Fliplet.Session.set(
+        { appNotificationsSeenAt: options.seenAt },
+        { required: true }
+      );
+    }
+
+    // Update appNotificationsSeenAt (throttled at 60 seconds)
+    return Fliplet.Cache.get(
+      {
+        expire: 60,
+        key: 'appNotificationsSeenAt'
+      },
+      function onFetchData() {
+        return Fliplet.Session.set(
+          { appNotificationsSeenAt: options.seenAt },
+          { required: true }
+        );
+      }
+    );
+  }
+
   function broadcastCountUpdates() {
     Fliplet.Hooks.run('notificationCountsUpdated', storage);
   }
@@ -241,6 +279,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
           Fliplet.Hooks.run('notificationStream', notification);
         });
 
+        // Fliplet() is used to allow custom code to add .add-notification-badge to elements before running addNotificationBadges()
         Fliplet().then(function() {
           setTimeout(function() {
             // Adding a timeout to allow page JS to modify page DOM first
@@ -253,6 +292,8 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
             }
           }, 0);
         });
+
+        return storage;
       });
   }
 
@@ -266,6 +307,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
     isPolling: isPolling,
     poll: poll,
     getInstance: getInstance,
-    addNotificationBadges: addNotificationBadges
+    addNotificationBadges: addNotificationBadges,
+    setAppNotificationSeenAt: setAppNotificationSeenAt
   };
 });

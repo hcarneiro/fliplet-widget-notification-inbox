@@ -186,7 +186,9 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
 
   function markAllUIAsRead() {
     // Update rendered notifications
-    $notifications.find('.notification-unread').removeClass('notification-unread').addClass('notification-read').find('.notification-badge').remove();
+    $notifications
+      .find('.notification-unread').removeClass('notification-unread').addClass('notification-read')
+      .find('.notification-badge').remove();
 
     // Update unread count
     updateUnreadCount(0);
@@ -431,8 +433,19 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
     }
   }
 
-  Fliplet.Hooks.on('afterNotificationsInit', function(instance) {
+  Fliplet.Hooks.on('afterNotificationsInit', function(instance, counts) {
+    // Notifications have loaded
     appNotifications = instance;
+
+    var appSettings = Fliplet.Env.get('appSettings');
+    var forceUpdate = appSettings.notificationsBadgeType !== 'unread' && counts.newCount > 0;
+
+    // Update session with the timestamp the notifications were last seen
+    // Ignore throttling if the notification badge count is based on new notifications
+    // and the count has just been reset
+    instance.setAppNotificationSeenAt({
+      force: forceUpdate
+    });
   });
 
   attachObservers();
