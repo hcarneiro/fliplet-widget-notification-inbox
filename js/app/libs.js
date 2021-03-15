@@ -12,6 +12,10 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
   var pageHasInbox = !!Fliplet.Registry.get('notification-inbox:1.0:core');
   var notificationsBadgeType = Fliplet.Env.get('appSettings').notificationsBadgeType;
 
+  if (['unread', 'new'].indexOf(notificationsBadgeType) < 0) {
+    notificationsBadgeType = 'new';
+  }
+
   function saveCounts(data) {
     data = data || {};
 
@@ -184,11 +188,11 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
 
     options = options || {};
 
-    return Fliplet.Navigator.Notifications.getBadgeNumber().then(function(badgeNumber) {
-      var countType = notificationsBadgeType === 'unread' ? 'unreadCount' : 'newCount';
+    var countProp = notificationsBadgeType + 'Count';
 
+    return Fliplet.Navigator.Notifications.getBadgeNumber().then(function(badgeNumber) {
       // App badge number has changed. Get the latest counts immediately.
-      if ((typeof badgeNumber === 'number' && badgeNumber !== storage[countType]) || options.forcePolling) {
+      if ((typeof badgeNumber === 'number' && badgeNumber !== storage[countProp]) || options.forcePolling) {
         return fetchCounts;
       }
 
@@ -221,7 +225,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
           unreadCount: counts[1],
           newCount: counts[0]
         };
-        var comparisonProp = notificationsBadgeType === 'unread' ? 'unreadCount' : 'newCount';
+        var comparisonProp = notificationsBadgeType + 'Count';
 
         countsUpdated = data[comparisonProp] !== storage[comparisonProp];
 
