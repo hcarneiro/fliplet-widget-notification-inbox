@@ -9,7 +9,7 @@ Fliplet.Widget.instance('notification-inbox-1-0-0', function(data) {
   // Sample implementation to initialize the widget
   var inbox = new NotificationInbox(element, data);
 
-  Fliplet().then(function() {
+  Fliplet.Hooks.on('beforeNotificationsInit', function(appComponentData, options) {
     if (data.mode === 'demo' && Fliplet.App.isPreview(true)) {
       // Initialize inbox as demo
       inbox.init({
@@ -18,27 +18,6 @@ Fliplet.Widget.instance('notification-inbox-1-0-0', function(data) {
 
       return;
     }
-
-    Fliplet.Cache.get({
-      // No need to update the appNotificationsSeenAt more than once every 60 seconds
-      expire: 60,
-      key: 'appNotificationsSeenAt'
-    }, function onFetchData() {
-      return Fliplet.Session.set({
-        appNotificationsSeenAt: Math.floor(Date.now() / 1000) // current timestamp in seconds
-      }, {
-        required: true
-      });
-    });
-  });
-
-  Fliplet.Hooks.on('beforeNotificationsInit', function(appComponentData, options) {
-    if (data.mode === 'demo' && Fliplet.App.isPreview(true)) {
-      return;
-    }
-
-    options.clearNewCountOnUpdate = true;
-    options.startCheckingUpdates = true;
 
     // Initialize Notification Inbox component
     inbox.init();

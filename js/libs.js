@@ -17,6 +17,9 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
 
     return appNotifications.checkForUpdates({
       forcePolling: true
+    }).then(function() {
+      // Update timestamp when app notifications are last loaded
+      appNotifications.setAppNotificationSeenAt({ force: true });
     });
   }
 
@@ -135,6 +138,8 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
         addLoadMore: true
       });
     }
+
+    Fliplet.Studio.emit('get-selected-widget');
   }
 
   function removeUnreadMarkers(ids) {
@@ -186,7 +191,9 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
 
   function markAllUIAsRead() {
     // Update rendered notifications
-    $notifications.find('.notification-unread').removeClass('notification-unread').addClass('notification-read').find('.notification-badge').remove();
+    $notifications
+      .find('.notification-unread').removeClass('notification-unread').addClass('notification-read')
+      .find('.notification-badge').remove();
 
     // Update unread count
     updateUnreadCount(0);
@@ -301,6 +308,21 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
       });
     }
 
+    Fliplet.Hooks.on('afterNotificationsInit', function(instance, counts) {
+      // Notifications have loaded
+      appNotifications = instance;
+
+      var notificationsBadgeType = Fliplet.Env.get('appSettings').notificationsBadgeType;
+      var forceUpdate = notificationsBadgeType !== 'unread' && counts.newCount > 0;
+
+      // Update session with the timestamp the notifications were last seen
+      // Ignore throttling if the notification badge count is based on new notifications
+      // and the count has just been reset
+      instance.setAppNotificationSeenAt({
+        force: forceUpdate
+      });
+    });
+
     $container
       .on('click', '.notification[data-notification-id]', function() {
         var id = $(this).data('notificationId');
@@ -403,8 +425,6 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
   function init(options) {
     options = options || {};
 
-    Fliplet.Studio.emit('get-selected-widget');
-
     moment.updateLocale('en', {
       calendar: {
         sameElse: 'MMMM Do YYYY'
@@ -419,6 +439,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
 
     if (options.mode === 'empty') {
       noNotificationsFound();
+      Fliplet.Studio.emit('get-selected-widget');
 
       return;
     }
@@ -430,10 +451,6 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
       pushWidget.ask();
     }
   }
-
-  Fliplet.Hooks.on('afterNotificationsInit', function(instance) {
-    appNotifications = instance;
-  });
 
   attachObservers();
 
