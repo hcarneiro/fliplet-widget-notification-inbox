@@ -265,7 +265,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
     });
 
     // Check the latest notification count against badge when the app resumes into foreground
-    document.addEventListener('resume', getLatestNotificationCounts, false);
+    document.addEventListener('resume', checkForUpdatesSinceLastClear, false);
   }
 
   function getInstance() {
