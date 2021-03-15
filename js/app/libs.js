@@ -4,7 +4,6 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
   var storageKey = 'flAppNotifications';
   var storage;
   var instance;
-  var clearNewCountOnUpdate = false;
   var timer;
   var instanceReady;
   var instancePromise = new Promise(function(resolve) {
@@ -18,7 +17,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
 
     storage.updatedAt = Date.now();
 
-    if (clearNewCountOnUpdate || !storage.clearedAt) {
+    if (pageHasInbox || !storage.clearedAt) {
       storage.clearedAt = Date.now();
     }
 
@@ -226,7 +225,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
 
         countsUpdated = data[comparisonProp] !== storage[comparisonProp];
 
-        if (clearNewCountOnUpdate) {
+        if (pageHasInbox) {
           data.newCount = 0;
         }
 
@@ -272,11 +271,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
     });
   }
 
-  function init(options) {
-    options = options || {};
-
-    clearNewCountOnUpdate = !!options.clearNewCountOnUpdate;
-
+  function init() {
     var defaults = {
       newCount: 0,
       unreadCount: 0

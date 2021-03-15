@@ -19,8 +19,6 @@ Fliplet.Widget.instance('notification-inbox-1-0-0', function(data) {
       return;
     }
 
-    options.clearNewCountOnUpdate = true;
-
     // Initialize Notification Inbox component
     inbox.init();
   });
