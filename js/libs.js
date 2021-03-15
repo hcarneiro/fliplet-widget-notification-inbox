@@ -138,6 +138,8 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
         addLoadMore: true
       });
     }
+
+    Fliplet.Studio.emit('get-selected-widget');
   }
 
   function removeUnreadMarkers(ids) {
@@ -423,8 +425,6 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
   function init(options) {
     options = options || {};
 
-    Fliplet.Studio.emit('get-selected-widget');
-
     moment.updateLocale('en', {
       calendar: {
         sameElse: 'MMMM Do YYYY'
@@ -439,6 +439,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
 
     if (options.mode === 'empty') {
       noNotificationsFound();
+      Fliplet.Studio.emit('get-selected-widget');
 
       return;
     }
