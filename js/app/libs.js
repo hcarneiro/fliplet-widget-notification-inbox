@@ -4,7 +4,6 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
   var storageKey = 'flAppNotifications';
   var storage;
   var instance;
-  var timer;
   var instanceReady;
   var instancePromise = new Promise(function(resolve) {
     instanceReady = resolve;
@@ -256,26 +255,13 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
       });
   }
 
-  function checkForUpdatesSinceLastClear() {
-    return checkForUpdates(storage.clearedAt || Date.now());
-  }
-
-  function setTimer(ms) {
-    if (typeof ms === 'undefined') {
-      ms = 0;
-    }
-
-    if (timer) {
-      clearTimeout(timer);
-      timer = null;
-    }
-
-    timer = setTimeout(checkForUpdatesSinceLastClear, ms);
+  function checkForUpdatesSinceLastClear(options) {
+    return checkForUpdates(storage.clearedAt || Date.now(), options);
   }
 
   function attachObservers() {
     Fliplet.Hooks.on('pushNotification', function() {
-      setTimer(0);
+      checkForUpdatesSinceLastClear({ force: true });
     });
 
     // Check the latest notification count against badge when the app resumes into foreground
