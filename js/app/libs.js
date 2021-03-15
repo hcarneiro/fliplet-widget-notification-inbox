@@ -19,10 +19,12 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
   function saveCounts(data) {
     data = data || {};
 
-    storage.updatedAt = Date.now();
+    var now = Date.now();
+
+    storage.updatedAt = now;
 
     if (pageHasInbox || !storage.clearedAt) {
-      storage.clearedAt = Date.now();
+      storage.clearedAt = now;
     }
 
     if (typeof data.unreadCount !== 'undefined') {
@@ -186,12 +188,14 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
       ]);
     }
 
+    var now = Date.now();
+
     if (typeof ts === 'object') {
       options = ts;
-      ts = Date.now();
+      ts = now;
     }
 
-    ts = ts || Date.now();
+    ts = ts || now;
     options = options || {};
 
     var countProp = notificationsBadgeType + 'Count';
@@ -215,19 +219,19 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
 
   function checkForUpdates(ts, opt) {
     var countsUpdated = false;
+    var now = Date.now();
 
     if (typeof ts === 'object') {
       opt = ts;
-      ts = Date.now();
+      ts = now;
     }
 
-    ts = ts || Date.now();
+    ts = ts || now;
     opt = opt || {};
 
     return getLatestNotificationCounts(ts, opt)
       .then(function(counts) {
         var data = {
-          updatedAt: Date.now(),
           unreadCount: counts[1],
           newCount: counts[0]
         };
