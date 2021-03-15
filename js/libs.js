@@ -102,7 +102,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
   }
 
   function updateUnreadCount(count) {
-    if (!count) {
+    if (!count || typeof count !== 'number') {
       $container.removeClass('notifications-has-unread');
       $container.find('.notifications-toolbar').html(Fliplet.Widget.Templates['templates.toolbar.empty']());
 
@@ -111,7 +111,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
 
     var tpl = Handlebars.compile(Fliplet.Widget.Templates['templates.toolbar']());
     var html = tpl({
-      count: count
+      count: Math.max(0, count)
     });
 
     $container.addClass('notifications-has-unread');
@@ -304,7 +304,9 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
       Fliplet.Hooks.on('notificationStream', processNotification);
 
       Fliplet.Hooks.on('notificationCountsUpdated', function(data) {
-        updateUnreadCount(data.unreadCount);
+        if (data && typeof data.unreadCount !== 'undefined') {
+          updateUnreadCount(data.unreadCount);
+        }
       });
     }
 

@@ -15,6 +15,8 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
     notificationsBadgeType = 'new';
   }
 
+  var countProp = notificationsBadgeType + 'Count';
+
   function saveCounts(data) {
     data = data || {};
 
@@ -26,32 +28,10 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
       storage.clearedAt = now;
     }
 
-    if (typeof data.unreadCount !== 'undefined') {
-      storage.unreadCount = Math.max(0, parseInt(data.unreadCount, 10) || 0);
-    }
+    storage[countProp] = Math.max(0, parseInt(data[countProp], 10) || 0);
 
-    if (typeof data.newCount !== 'undefined') {
-      storage.newCount = Math.max(
-        0,
-        Math.min(storage.unreadCount, parseInt(data.newCount, 10) || 0)
-      );
-    }
-
-    switch (notificationsBadgeType) {
-      case 'unread':
-        if (typeof storage.unreadCount === 'number') {
-          Fliplet.Navigator.Notifications.setAppBadge(storage.unreadCount);
-        }
-
-        break;
-      case 'new':
-      default:
-        if (typeof storage.newCount === 'number') {
-          Fliplet.Navigator.Notifications.setAppBadge(storage.newCount);
-        }
-
-        break;
-    }
+    // Update app badge
+    Fliplet.Navigator.Notifications.setAppBadge(storage[countProp]);
 
     return Fliplet.App.Storage.set(storageKey, storage);
   }
@@ -104,14 +84,10 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
       });
   }
 
-  function addNotificationBadges(options) {
-    if (typeof options !== 'undefined' && !_.isObject(options)) {
-      options = { count: options };
+  function addNotificationBadges(count) {
+    if (typeof count === 'undefined') {
+      count = storage[countProp];
     }
-
-    options = options || {};
-
-    var count = options.count || storage.newCount;
 
     count = parseInt(count, 10);
 
@@ -125,8 +101,16 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
 
     $('.add-notification-badge')
       .addClass('has-notification-badge')
-      .find('.notification-badge').remove().end()
-      .append('<div class="notification-badge">' + count + '</div>');
+      .each(function() {
+        var $target = $(this);
+        var $badge = $target.find('.notification-badge');
+
+        if ($badge.length) {
+          $badge.html(count);
+        } else {
+          $target.append('<div class="notification-badge">' + count + '</div>');
+        }
+      });
   }
 
   /**
@@ -151,7 +135,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
       options.seenAt = Math.floor(Date.now() / 1000);
     }
 
-    // Update appNotificationsSeenAt immediately
+    // Update session immediately
     if (options.force) {
       return updateSession();
     }
@@ -178,13 +162,21 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
     return instance.poll(options);
   }
 
-  function getLatestNotificationCounts(ts, options) {
-    function fetchCounts() {
-      return Promise.all([
+  function getLatestNotificationCount(ts, options) {
+    function fetchCount() {
+      var query;
+
+      if (notificationsBadgeType !== 'unread') {
+        // New notification count is always reset to 0 when the page has an inbox
+        if (pageHasInbox) {
+          return Promise.resolve(0);
+        }
+
         // @TODO Update to use instance.new.count()
-        instance.unread.count({ createdAt: { $gt: ts } }),
-        instance.unread.count()
-      ]);
+        query = { createdAt: { $gt: ts } };
+      }
+
+      return instance.unread.count(query);
     }
 
     var now = Date.now();
@@ -197,27 +189,22 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
     ts = ts || now;
     options = options || {};
 
-    var countProp = notificationsBadgeType + 'Count';
-
     return Fliplet.Navigator.Notifications.getAppBadge().then(function(badgeNumber) {
       // App badge number has changed. Get the latest counts immediately.
       if ((typeof badgeNumber === 'number' && badgeNumber !== storage[countProp]) || options.force) {
-        return fetchCounts();
+        return fetchCount();
       }
 
       // Get notification counts (throttled at 60 seconds)
-      return Fliplet.Cache.get(
-        {
-          expire: 60,
-          key: 'appNotificationsCounts'
-        },
-        fetchCounts
-      );
+      return Fliplet.Cache.get({
+        expire: 60,
+        key: 'appNotificationCount'
+      }, fetchCount);
     });
   }
 
   function checkForUpdates(ts, opt) {
-    var countsUpdated = false;
+    var countUpdated = false;
     var now = Date.now();
 
     if (typeof ts === 'object') {
@@ -228,26 +215,20 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
     ts = ts || now;
     opt = opt || {};
 
-    return getLatestNotificationCounts(ts, opt)
-      .then(function(counts) {
-        var data = {
-          unreadCount: counts[1],
-          newCount: counts[0]
-        };
-        var comparisonProp = notificationsBadgeType + 'Count';
+    return getLatestNotificationCount(ts, opt)
+      .then(function(count) {
+        var data = {};
 
-        countsUpdated = data[comparisonProp] !== storage[comparisonProp];
-
-        if (pageHasInbox) {
-          data.newCount = 0;
-        }
+        data[countProp] = count;
+        countUpdated = data[countProp] !== storage[countProp];
 
         return saveCounts(data);
       })
-      .then(addNotificationBadges)
-      .then(broadcastCountUpdates)
-      .then(function() {
-        if (!countsUpdated && !opt.force) {
+      .then(function(data) {
+        addNotificationBadges(data[countProp]);
+        broadcastCountUpdates();
+
+        if (!countUpdated && !opt.force) {
           return Promise.resolve();
         }
 
@@ -312,7 +293,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
 
             addNotificationBadges();
             broadcastCountUpdates();
-            checkForUpdatesSinceLastClear();
+            checkForUpdatesSinceLastClear({ force: pageHasInbox });
           }, 0);
         });
 
@@ -332,6 +313,6 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
     getInstance: getInstance,
     addNotificationBadges: addNotificationBadges,
     setAppNotificationSeenAt: setAppNotificationSeenAt,
-    getLatestNotificationCounts: getLatestNotificationCounts
+    getLatestNotificationCount: getLatestNotificationCount
   };
 });
