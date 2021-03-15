@@ -152,7 +152,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
 
     // Update appNotificationsSeenAt immediately
     if (options.force) {
-      return updateSession;
+      return updateSession();
     }
 
     // Update appNotificationsSeenAt (throttled at 60 seconds)
@@ -199,7 +199,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
     return Fliplet.Navigator.Notifications.getBadgeNumber().then(function(badgeNumber) {
       // App badge number has changed. Get the latest counts immediately.
       if ((typeof badgeNumber === 'number' && badgeNumber !== storage[countProp]) || options.force) {
-        return fetchCounts;
+        return fetchCounts();
       }
 
       // Get notification counts (throttled at 60 seconds)
