@@ -186,13 +186,19 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
       ]);
     }
 
+    if (typeof ts === 'object') {
+      options = ts;
+      ts = Date.now();
+    }
+
+    ts = ts || Date.now();
     options = options || {};
 
     var countProp = notificationsBadgeType + 'Count';
 
     return Fliplet.Navigator.Notifications.getBadgeNumber().then(function(badgeNumber) {
       // App badge number has changed. Get the latest counts immediately.
-      if ((typeof badgeNumber === 'number' && badgeNumber !== storage[countProp]) || options.forcePolling) {
+      if ((typeof badgeNumber === 'number' && badgeNumber !== storage[countProp]) || options.force) {
         return fetchCounts;
       }
 
@@ -238,7 +244,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
       .then(addNotificationBadges)
       .then(broadcastCountUpdates)
       .then(function() {
-        if (!countsUpdated && !opt.forcePolling) {
+        if (!countsUpdated && !opt.force) {
           return Promise.resolve();
         }
 

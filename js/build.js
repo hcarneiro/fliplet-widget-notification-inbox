@@ -9,7 +9,11 @@ Fliplet.Widget.instance('notification-inbox-1-0-0', function(data) {
   // Sample implementation to initialize the widget
   var inbox = new NotificationInbox(element, data);
 
-  Fliplet.Hooks.on('beforeNotificationsInit', function(appComponentData, options) {
+  Fliplet.Widget.register('NotificationInbox', function() {
+    return inbox;
+  });
+
+  Fliplet.Hooks.on('beforeNotificationsInit', function() {
     if (data.mode === 'demo' && Fliplet.App.isPreview(true)) {
       // Initialize inbox as demo
       inbox.init({

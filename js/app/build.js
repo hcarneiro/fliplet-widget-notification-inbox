@@ -7,12 +7,18 @@ Fliplet().then(function() {
   Fliplet.Notifications.Scopes.get().then(function(scope) {
     var data = { scope: scope };
 
-    Fliplet.Hooks.run('beforeNotificationsInit', data, options).then(function() {
-      var instance = new Notifications(data);
+    Fliplet.Hooks.run('beforeNotificationsInit', data, options).then(
+      function() {
+        var instance = new Notifications(data);
 
-      instance.init(options).then(function(counts) {
-        Fliplet.Hooks.run('afterNotificationsInit', instance, counts);
-      });
-    });
+        instance.init(options).then(function(counts) {
+          Fliplet.Widget.register('AppNotifications', function() {
+            return instance;
+          });
+
+          Fliplet.Hooks.run('afterNotificationsInit', instance, counts);
+        });
+      }
+    );
   });
 });
