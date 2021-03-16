@@ -232,7 +232,9 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
         broadcastCountUpdates();
 
         if (countsUpdated && pageHasInbox) {
-          return poll();
+          return poll().then(function() {
+            setAppNotificationSeenAt({ force: true });
+          });
         }
       });
   }
