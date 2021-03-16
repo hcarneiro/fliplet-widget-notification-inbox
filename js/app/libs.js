@@ -235,11 +235,9 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
         addNotificationBadges(data[countProp]);
         broadcastCountUpdates();
 
-        if (!countUpdated && !opt.force) {
-          return Promise.resolve();
+        if (countsUpdated && pageHasInbox) {
+          return poll();
         }
-
-        return poll();
       });
   }
 
