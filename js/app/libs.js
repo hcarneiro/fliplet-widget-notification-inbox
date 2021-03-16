@@ -196,9 +196,9 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
         return fetchCounts();
       }
 
-      // Get notification counts (throttled at 60 seconds)
+      // Get notification counts (throttled at 20 seconds)
       return Fliplet.Cache.get({
-        expire: 60,
+        expire: 20,
         key: 'appNotificationCount'
       }, fetchCounts);
     });
