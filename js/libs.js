@@ -11,15 +11,24 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
   var isDemoMode = false;
 
   function checkForUpdates() {
-    $('[data-refresh]').addClass('fa-spin');
+    var $target = $('[data-refresh]');
+
+    $target.addClass('fa-spin');
 
     if (!appNotifications) {
       return Promise.reject('Notifications add-on is not configured');
     }
 
     return appNotifications.checkForUpdates({ force: true }).then(function() {
+      $target.removeClass('fa-spin');
+
       // Update timestamp when app notifications are last loaded
       appNotifications.setAppNotificationSeenAt({ force: true });
+    }).catch(function(error) {
+      $target.removeClass('fa-spin');
+      Fliplet.UI.Toast.error(error, {
+        message: 'Notification refresh failed'
+      });
     });
   }
 
@@ -364,14 +373,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
         Fliplet.App.About.open();
       })
       .on('click', '[data-refresh]', function() {
-        return checkForUpdates().then(function() {
-          $target.removeClass('fa-spin');
-        }).catch(function(error) {
-          $target.removeClass('fa-spin');
-          Fliplet.UI.Toast.error(error, {
-            message: 'Notification refresh failed'
-          });
-        });
+        checkForUpdates();
       });
   }
 
