@@ -251,7 +251,13 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
     });
 
     // Check the latest notification count against badge when the app resumes into foreground
-    document.addEventListener('resume', checkForUpdatesSinceLastClear, false);
+    document.addEventListener('resume', function() {
+      // Wait for connection to return
+      setTimeout(checkForUpdatesSinceLastClear, 0);
+    }, false);
+
+    // Check for updates when device comes back online
+    Fliplet.Navigator.onOnline(checkForUpdatesSinceLastClear);
   }
 
   function getInstance() {
