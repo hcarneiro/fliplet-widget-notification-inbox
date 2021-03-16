@@ -145,10 +145,10 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
       return updateSession();
     }
 
-    // Update appNotificationsSeenAt (throttled at 30 seconds)
+    // Update appNotificationsSeenAt (throttled at 60 seconds)
     return Fliplet.Cache.get(
       {
-        expire: 30,
+        expire: 60,
         key: 'appNotificationsSeenAt'
       },
       updateSession
@@ -196,9 +196,9 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
         return fetchCounts();
       }
 
-      // Get notification counts (throttled at 30 seconds)
+      // Get notification counts (throttled at 60 seconds)
       return Fliplet.Cache.get({
-        expire: 30,
+        expire: 60,
         key: 'appNotificationCount'
       }, fetchCounts);
     });
