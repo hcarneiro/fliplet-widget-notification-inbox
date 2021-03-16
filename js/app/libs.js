@@ -53,11 +53,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
       .then(function(results) {
         results = results || {};
         affected = results.affected || 0;
-
-        return instance.unread.count();
-      })
-      .then(function(value) {
-        unreadCount = value;
+        unreadCount = Math.max(0, storage.unreadCount - affected);
 
         return saveCounts({
           unreadCount: unreadCount,
