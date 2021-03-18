@@ -281,8 +281,6 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
           scope: data.scope,
           onFirstResponse: function(err, notifications) {
             Fliplet.Hooks.run('notificationFirstResponse', err, notifications);
-
-            Fliplet.Navigator.Notifications.clearAllNotifications();
           }
         });
         instanceReady();
