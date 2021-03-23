@@ -1,6 +1,20 @@
+var appSettingsBadgeType;
+
 function saveWidget() {
-  return Fliplet.Widget.save({
-    mode: $('#show_demo').prop('checked') ? 'demo' : null
+  var saveAppSettings = Promise.resolve();
+  var badgeType = $('[name="notificationsBadgeType"]:checked').val();
+
+  // Update app settings if the value has changed
+  if (badgeType && badgeType !== appSettingsBadgeType) {
+    saveAppSettings = Fliplet.App.Settings.set({
+      notificationsBadgeType: badgeType
+    });
+  }
+
+  return saveAppSettings.then(function() {
+    return Fliplet.Widget.save({
+      mode: $('#show_demo').prop('checked') ? 'demo' : null
+    });
   }).then(function() {
     return Fliplet.Widget.complete();
   }).catch(function(error) {
@@ -43,9 +57,17 @@ function attachObservers() {
 
 function init() {
   var data = Fliplet.Widget.getData() || {};
+  var badgeType = Fliplet.Env.get('appSettings').notificationsBadgeType;
+
+  appSettingsBadgeType = badgeType;
+
+  if (['new', 'unread'].indexOf(badgeType) < 0) {
+    badgeType = 'new';
+  }
 
   // Restore form data
   $('#show_demo').prop('checked', data.mode === 'demo');
+  $('[name="notificationsBadgeType"][value="' + badgeType + '"]').prop('checked', true);
 
   // Show interface UI after loading
   $('.interface-container').removeClass('loading');
