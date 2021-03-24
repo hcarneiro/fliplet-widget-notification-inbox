@@ -126,8 +126,6 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
    * @returns {Promise} The promise resolves when the session data is updated, taking throttling into consideration
    */
   function setAppNotificationSeenAt(options) {
-    var forceFetch;
-
     options = options || {};
 
     // Default to current timestamp in seconds
@@ -135,16 +133,11 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
       options.seenAt = Math.floor(Date.now() / 1000);
     }
 
-    // Update session immediately
-    if (options.force) {
-      forceFetch = true;
-    }
-
     // Update appNotificationsSeenAt (throttled at 60 seconds)
     return Fliplet.Cache.get({
       expire: 60,
       key: 'appNotificationsSeenAt',
-      forceBackgroundUpdate: forceFetch
+      forceBackgroundUpdate: options.force
     }, function updateSession() {
       return Fliplet.Session.set(
         { appNotificationsSeenAt: options.seenAt },
