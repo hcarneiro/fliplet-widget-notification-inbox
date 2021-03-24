@@ -319,19 +319,9 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
       });
     }
 
-    Fliplet.Hooks.on('afterNotificationsInit', function(instance, counts) {
+    Fliplet.Hooks.on('afterNotificationsInit', function(instance) {
       // Notifications have loaded
       appNotifications = instance;
-
-      var notificationsBadgeType = Fliplet.Env.get('appSettings').notificationsBadgeType;
-      var forceUpdate = notificationsBadgeType !== 'unread' && counts.newCount > 0;
-
-      // Update session with the timestamp the notifications were last seen
-      // Ignore throttling if the notification badge count is based on new notifications
-      // and the count has just been reset
-      instance.setAppNotificationSeenAt({
-        force: forceUpdate
-      });
     });
 
     $container
