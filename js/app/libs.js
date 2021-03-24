@@ -121,18 +121,11 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
   /**
    * Updates the session with the latest timestamp that the notifications were seen
    * @param {Object} options - A mapping of options for the function
-   * @param {Number} options.seenAt - Timestamp in seconds. Defaults to current timestamp if falsey
+   * @param {Number} options.seenAt - UNIX timestamp in seconds. Defaults to current timestamp if falsy
    * @param {Boolean} options.force - If true, throttling is disabled
    * @returns {Promise} The promise resolves when the session data is updated, taking throttling into consideration
    */
   function setAppNotificationSeenAt(options) {
-    function updateSession() {
-      return Fliplet.Session.set(
-        { appNotificationsSeenAt: options.seenAt },
-        { required: true }
-      );
-    }
-
     options = options || {};
 
     // Default to current timestamp in seconds
@@ -140,19 +133,17 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
       options.seenAt = Math.floor(Date.now() / 1000);
     }
 
-    // Update session immediately
-    if (options.force) {
-      return updateSession();
-    }
-
     // Update appNotificationsSeenAt (throttled at 60 seconds)
-    return Fliplet.Cache.get(
-      {
-        expire: 60,
-        key: 'appNotificationsSeenAt'
-      },
-      updateSession
-    );
+    return Fliplet.Cache.get({
+      expire: 60,
+      key: 'appNotificationsSeenAt',
+      forceBackgroundUpdate: options.force
+    }, function updateSession() {
+      return Fliplet.Session.set(
+        { appNotificationsSeenAt: options.seenAt },
+        { required: true }
+      );
+    });
   }
 
   function broadcastCountUpdates() {
@@ -178,29 +169,30 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
     lastClearedAt = lastClearedAt || now;
     options = options || {};
 
-    function fetchCounts() {
-      var getNewCount = pageHasInbox
-        ? Promise.resolve(0)
-        // TODO Update to use instance.new.count()
-        : instance.unread.count({ createdAt: { $gt: lastClearedAt } });
-
-      return Promise.all([
-        getNewCount,
-        instance.unread.count()
-      ]);
-    }
-
     return Fliplet.Navigator.Notifications.getAppBadge().then(function(badgeNumber) {
+      var forceFetch;
+
       // App badge number has changed. Get the latest counts immediately.
       if ((typeof badgeNumber === 'number' && badgeNumber !== storage[countProp]) || options.force) {
-        return fetchCounts();
+        forceFetch = true;
       }
 
       // Get notification counts (throttled at 20 seconds)
       return Fliplet.Cache.get({
         expire: 20,
-        key: 'appNotificationCount'
-      }, fetchCounts);
+        key: 'appNotificationCount',
+        forceBackgroundUpdate: forceFetch
+      }, function fetchCounts() {
+        var getNewCount = pageHasInbox
+          ? Promise.resolve(0)
+          // TODO Update to use instance.new.count()
+          : instance.unread.count({ createdAt: { $gt: lastClearedAt } });
+
+        return Promise.all([
+          getNewCount,
+          instance.unread.count()
+        ]);
+      });
     });
   }
 
