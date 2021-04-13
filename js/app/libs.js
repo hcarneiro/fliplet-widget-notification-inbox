@@ -3,6 +3,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
 
   var storageKey = 'flAppNotifications';
   var storage;
+  var pushNotificationStorageKey = 'flPushNotificationPayload';
   var instance;
   var instanceReady;
   var instancePromise = new Promise(function(resolve) {
@@ -268,8 +269,14 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
   }
 
   function attachObservers() {
+    // Push notification received
     Fliplet.Hooks.on('pushNotification', function() {
       checkForUpdatesSinceLastClear({ force: true });
+    });
+
+    // Push notification opened
+    Fliplet.Hooks.on('pushNotificationOpen', function(data) {
+      return handlePushNotificationPayload(data);
     });
 
     // Check the latest notification count against badge when the app resumes into foreground
@@ -288,6 +295,41 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
     });
   }
 
+  /**
+   * Process payload from push notifications to mark app notification as read or store for later
+   * @param {Object} payload - Payload
+   * @param {Boolean} fromStorage - If true, the payload is accessed from storage instead of directly from notification
+   * @returns {undefined}
+   */
+  function handlePushNotificationPayload(payload, fromStorage) {
+    if (typeof payload !== 'object') {
+      return;
+    }
+
+    var payloadPage = parseInt(payload.page, 10);
+    var openCurrentPage = payload.action === 'screen'
+      && [Fliplet.Env.get('pageId'), Fliplet.Env.get('pageMasterId')].indexOf(payloadPage) > -1
+      && fromStorage;
+
+    // Payload loaded from storage. Clear the storage.
+    if (fromStorage) {
+      Fliplet.Storage.remove(pushNotificationStorageKey);
+    }
+
+    if (['screen', 'url', 'popup'].indexOf(payload.action) === -1
+      || (payload.action === 'url' && Fliplet.Navigator.isOnline())) {
+      markAsRead([payload.appNotificationId]);
+    } else if (openCurrentPage || payload.action === 'popup') {
+      setTimeout(function() {
+        markAsRead([payload.appNotificationId]);
+      }, 1000); // Give time for any redirects to occur
+    } else if (payload.action === 'screen' && !fromStorage) {
+      // Notification is taking the user to another page
+      // Save the notification payload into storage for another page to process
+      return Fliplet.Storage.set(pushNotificationStorageKey, payload);
+    }
+  }
+
   function init() {
     var defaults = {
       newCount: 0,
@@ -300,6 +342,10 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
       .then(function(value) {
         storage = value;
 
+        // Check if any notification was opened through push notification
+        return Fliplet.Storage.get(pushNotificationStorageKey);
+      })
+      .then(function(payload) {
         instance = Fliplet.Notifications.init({
           batchSize: BATCH_SIZE,
           scope: data.scope,
@@ -308,6 +354,9 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
           }
         });
         instanceReady();
+
+        // Mark app notification as read if necessary
+        handlePushNotificationPayload(payload, true);
 
         // Stream notifications if there's an inbox in the screen
         if (pageHasInbox) {
