@@ -189,13 +189,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
       return Promise.reject('Notifications add-on is not configured');
     }
 
-    return appNotifications.markAsRead(arr)
-      .then(function(results) {
-        // Update unread markers
-        removeUnreadMarkers(ids);
-        // Update unread count
-        updateUnreadCount(results.unreadCount);
-      });
+    return appNotifications.markAsRead(arr);
   }
 
   function markAllUIAsRead() {
@@ -316,6 +310,15 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
         if (data && typeof data.unreadCount !== 'undefined') {
           updateUnreadCount(data.unreadCount);
         }
+      });
+
+      Fliplet.Hooks.on('notificationRead', function(data) {
+        data = data || {};
+
+        // Update unread markers
+        removeUnreadMarkers(data.ids);
+        // Update unread count
+        updateUnreadCount(data.unreadCount);
       });
     }
 

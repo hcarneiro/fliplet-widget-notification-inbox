@@ -49,22 +49,48 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
     var affected;
     var unreadCount;
 
+    notifications = _.map(notifications, function(notification) {
+      if (typeof notification === 'number') {
+        notification = { id: notification };
+      }
+
+      return notification;
+    });
+
     return instance.markNotificationsAsRead(notifications)
       .then(function(results) {
+        // Get the latest unread counts after a notification is read outside of the inbox
+        if (!pageHasInbox) {
+          return checkForUpdatesSinceLastClear({ force: true });
+        }
+
         results = results || {};
         affected = results.affected || 0;
+
         unreadCount = Math.max(0, storage.unreadCount - affected);
 
-        return saveCounts({
-          unreadCount: unreadCount,
-          newCount: 0
-        });
-      })
-      .then(function() {
-        return Promise.resolve({
-          affected: affected,
-          unreadCount: unreadCount
-        });
+        // Update the notification count cache
+        return Fliplet.Cache.set('appNotificationCount', [0, unreadCount])
+          .then(function() {
+            return saveCounts({
+              newCount: 0,
+              unreadCount: unreadCount
+            });
+          })
+          .then(function() {
+            addNotificationBadges();
+            broadcastCountUpdates();
+
+            var data = {
+              affected: affected,
+              unreadCount: unreadCount,
+              ids: _.map(notifications, 'id')
+            };
+
+            Fliplet.Hooks.run('notificationRead', data);
+
+            return data;
+          });
       });
   }
 
@@ -76,16 +102,22 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
         results = results || {};
         affected = results.affected || 0;
 
-        return saveCounts({
-          unreadCount: 0,
-          newCount: 0
-        });
-      })
-      .then(function() {
-        return Promise.resolve({
-          affected: affected,
-          unreadCount: 0
-        });
+        return Fliplet.Cache.set('appNotificationCount', [0, 0])
+          .then(function() {
+            return saveCounts({
+              unreadCount: 0,
+              newCount: 0
+            });
+          })
+          .then(function() {
+            addNotificationBadges();
+            broadcastCountUpdates();
+
+            return {
+              affected: affected,
+              unreadCount: 0
+            };
+          });
       });
   }
 
@@ -185,7 +217,6 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
       }, function fetchCounts() {
         var getNewCount = pageHasInbox
           ? Promise.resolve(0)
-          // TODO Update to use instance.new.count()
           : instance.unread.count({ createdAt: { $gt: lastClearedAt } });
 
         return Promise.all([
@@ -197,7 +228,6 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
   }
 
   function checkForUpdates(ts, opt) {
-    var countsUpdated = false;
     var now = Date.now();
 
     if (typeof ts === 'object') {
@@ -215,15 +245,17 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
           unreadCount: counts[1]
         };
 
-        countsUpdated = !_.isEqual(_.pick(storage, _.keys(data)), data);
-
         return saveCounts(data);
       })
       .then(function(data) {
         addNotificationBadges(data[countProp]);
         broadcastCountUpdates();
 
-        if (countsUpdated && pageHasInbox) {
+        // Poll for more notifications if the page contains the inbox,
+        // regardless of whether the new/unread counts are updated
+        // because notifications could be marked as read immediately
+        // from opening push notifications
+        if (pageHasInbox) {
           return poll().then(function() {
             setAppNotificationSeenAt({ force: true });
           });
