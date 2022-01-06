@@ -9,6 +9,8 @@ Fliplet.Widget.instance('notification-inbox-1-0-0', function(data) {
   // Sample implementation to initialize the widget
   var inbox = new NotificationInbox(element, data);
 
+  $(element).translate();
+
   Fliplet.Widget.register('NotificationInbox', function() {
     return inbox;
   });
