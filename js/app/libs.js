@@ -144,9 +144,9 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
         var $badge = $target.find('.notification-badge');
 
         if ($badge.length) {
-          $badge.html(count);
+          $badge.html(TN(count));
         } else {
-          $target.append('<div class="notification-badge">' + count + '</div>');
+          $target.append('<div class="notification-badge">' + TN(count) + '</div>');
         }
       });
   }
