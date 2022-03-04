@@ -362,7 +362,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
         if (pageHasInbox) {
           instance.stream(function(notification) {
             Fliplet.Hooks.run('notificationStream', notification);
-          });
+          }, { offline: true });
         }
 
         // Fliplet() is used to allow custom code to add .add-notification-badge to elements before running addNotificationBadges()
