@@ -1,0 +1,22 @@
+{
+  "widgets": {
+    "notificationInbox": {
+      "actions": {
+        "loadMore": "Load more"
+      },
+      "noNotifications": {
+        "title": "No notifications yet",
+        "instruction": "Check again later for updates"
+      },
+      "errors": {
+        "loadingFailed": "There was an error loading notifications"
+      },
+      "toolbar": {
+        "unread": "unread",
+        "actions": {
+          "readAll": "Mark all as read"
+        }
+      }
+    }
+  }
+}
