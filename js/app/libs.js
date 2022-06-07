@@ -395,6 +395,7 @@ Fliplet.Registry.set('notification-inbox:1.0:app:core', function(data) {
     getInstance: getInstance,
     addNotificationBadges: addNotificationBadges,
     setAppNotificationSeenAt: setAppNotificationSeenAt,
-    getLatestNotificationCounts: getLatestNotificationCounts
+    getLatestNotificationCounts: getLatestNotificationCounts,
+    saveCounts: saveCounts
   };
 });
