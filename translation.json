@@ -9,7 +9,8 @@
         "instruction": "Check again later for updates"
       },
       "errors": {
-        "loadingFailed": "There was an error loading notifications"
+        "loadingFailed": "There was an error loading notifications",
+        "refreshingFailed": "Notification refresh failed"
       },
       "toolbar": {
         "unread": "unread",

@@ -27,7 +27,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
     }).catch(function(error) {
       $target.removeClass('fa-spin');
       Fliplet.UI.Toast.error(error, {
-        message: 'Notification refresh failed'
+        message: T('widgets.notificationInbox.errors.refreshingFailed')
       });
     });
   }
