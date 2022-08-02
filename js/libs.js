@@ -287,7 +287,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
 
   function attachObservers() {
     if (data.mode !== 'demo' || !Fliplet.App.isPreview(true)) {
-      Fliplet.Hooks.on('notificationFirstResponse', function(err, notifications) {
+      Fliplet.Hooks.on('notificationFirstResponse', function(err, messages) {
         if (err) {
           $('.notifications').html(Fliplet.Widget.Templates['templates.notificationsError']());
           Fliplet.UI.Toast.error(err, {
@@ -297,9 +297,10 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
           return;
         }
 
-        if (!_.filter(notifications, function(notification) {
-          return !notification.deletedAt && notification.status !== 'draft';
-        }).length) {
+        // Show "No notifications found" UI if there's no new or existing notifications
+        if (!_.filter(messages, function(message) {
+          return !message.deletedAt && message.status !== 'draft';
+        }).length && !notifications.length) {
           noNotificationsFound();
         }
       });
