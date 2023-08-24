@@ -1,6 +1,6 @@
 {
-  "name": "Notification inbox",
-  "package": "com.fliplet.notificationInbox",
+  "name": "Fliplet Viewer - Notification inbox",
+  "package": "com.fliplet.fvNotificationInbox",
   "version": "1.0.0",
   "icon": "img/icon.png",
   "tags": ["type:component", "category:general"],
@@ -8,32 +8,12 @@
   "references": [],
   "html_tag": "div",
   "interface": {
-    "dependencies": [
-      "fliplet-core",
-      "fliplet-studio-ui"
-    ],
-    "assets": [
-      "css/interface.css",
-      "js/interface.js"
-    ]
+    "dependencies": ["fliplet-core", "fliplet-studio-ui"],
+    "assets": ["css/interface.css", "js/interface.js"]
   },
   "build": {
-    "dependencies": [
-      "jquery",
-      "bootstrap",
-      "fliplet-session",
-      "fliplet-notifications"
-    ],
-    "appAssets": [
-      "js/app/libs.js",
-      "js/app/build.js",
-      "css/app/build.css"
-    ],
-    "assets": [
-      "css/build.css",
-      "js/libs.js",
-      "js/build.templates.js",
-      "js/build.js"
-    ]
+    "dependencies": ["jquery", "bootstrap", "fliplet-session", "fliplet-notifications"],
+    "appAssets": ["css/app/build.css"],
+    "assets": ["css/build.css", "js/libs.js", "js/build.templates.js", "js/build.js"]
   }
 }

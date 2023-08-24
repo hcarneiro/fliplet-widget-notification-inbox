@@ -1,8 +1,18 @@
-<div class="notification \{{#if readStatus}}notification-read\{{else}}notification-unread\{{/if}}\{{#if hasLink}} notification-linked\{{/if}}" data-notification-id="\{{id}}" data-notification-status="\{{status}}">
-  <div class="subtitle">\{{TD orderAt format="fromNow"}}</div>
+<div class="notification \{{#if readAt}}notification-read\{{else}}notification-unread\{{/if}}\{{#if hasLink}} notification-linked\{{/if}} \{{data.type}}" data-notification-id="\{{id}}" data-notification-status="\{{status}}">
+  <div class="subtitle">\{{TD createdAt format="fromNow"}}</div>
+  \{{#if data.tags}}
+  <div class="tags">
+    \{{#each data.tags}}
+      <span class="tag \{{type}}">\{{name}}</span>
+    \{{/each}}
+  </div>
+  \{{/if}}
   \{{#if data.title}}<h2 class="title">\{{data.title}}</h2>\{{/if}}
   \{{#if data.message}}<div class="description">
     <p>\{{data.message}}</p>
+  </div>\{{/if}}
+  \{{#if data.body}}<div class="description">
+    <p>\{{data.body}}</p>
   </div>\{{/if}}
   \{{#unless readStatus}}<div class="notification-badge"></div>\{{/unless}}
 </div>

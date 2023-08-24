@@ -12,9 +12,7 @@ function saveWidget() {
   }
 
   return saveAppSettings.then(function() {
-    return Fliplet.Widget.save({
-      mode: $('#show_demo').prop('checked') ? 'demo' : null
-    });
+    return Fliplet.Widget.save();
   }).then(function() {
     return Fliplet.Widget.complete();
   }).catch(function(error) {
@@ -66,7 +64,6 @@ function init() {
   }
 
   // Restore form data
-  $('#show_demo').prop('checked', data.mode === 'demo');
   $('[name="notificationsBadgeType"][value="' + badgeType + '"]').prop('checked', true);
 
   // Show interface UI after loading

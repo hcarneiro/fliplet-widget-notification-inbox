@@ -1,35 +1,86 @@
-Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
+Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(element) {
   var BATCH_SIZE = 20;
-
   var $container = $(element);
   var $notifications = $container.find('.notifications');
-
   var notifications = [];
   var $loadMore = $([]);
-  var appNotifications;
   var isLastNotificationLoaded = false;
-  var isDemoMode = false;
+  var notificationTags = {
+    pricingLimitation: ['App limit'],
+    organizationLimitation: ['Organization limit'],
+    onboarding: ['Onboarding'],
+    promotion: ['Promotion']
+  };
+
+  function getUserNotifications(options) {
+    options = options || {};
+
+    return Fliplet.API.request({
+      method: 'GET',
+      url: 'v1/user/notifications',
+      data: {
+        params: {
+          limit: options.limit || BATCH_SIZE,
+          offset: options.offset || notifications.length,
+          where: options.where ? JSON.stringify(options.where) : undefined
+        }
+      }
+    });
+  }
+
+  function markNotificationsAsRead(ids) {
+    if (!Array.isArray(ids)) {
+      ids = [ids];
+    }
+
+    return Fliplet.API.request({
+      method: 'POST',
+      url: 'v1/user/notifications/mark-as-read',
+      data: {
+        notificationIds: ids
+      }
+    });
+  }
 
   function checkForUpdates() {
     var $target = $('[data-refresh]');
 
     $target.addClass('fa-spin');
 
-    if (!appNotifications) {
-      return Promise.reject('Notifications add-on is not configured');
-    }
+    return getUserNotifications({
+      limit: BATCH_SIZE,
+      offset: notifications.length
+    })
+      .then(function(results) {
+        $target.removeClass('fa-spin');
 
-    return appNotifications.checkForUpdates({ force: true }).then(function() {
-      $target.removeClass('fa-spin');
+        if (!results || !results.notifications) {
+          return;
+        }
 
-      // Update timestamp when app notifications are last loaded
-      appNotifications.setAppNotificationSeenAt({ force: true });
-    }).catch(function(error) {
-      $target.removeClass('fa-spin');
-      Fliplet.UI.Toast.error(error, {
-        message: T('widgets.notificationInbox.errors.refreshingFailed')
+        Fliplet.Analytics.trackEvent({
+          category: 'fv_notification_inbox',
+          action: 'fv_check_updates',
+          value: results.notifications.length
+        });
+
+        if (!results.notifications.length) {
+          return;
+        }
+
+        results.notifications.forEach(function(notification) {
+          processNotification(notification);
+        });
+
+        updateUnreadCount();
+      })
+      .catch(function(error) {
+        $target.removeClass('fa-spin');
+
+        Fliplet.UI.Toast.error(error, {
+          message: T('widgets.notificationInbox.errors.refreshingFailed')
+        });
       });
-    });
   }
 
   function getNotificationRender(notification) {
@@ -53,7 +104,8 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
     }
 
     notifications.push(notification);
-    notifications = _.orderBy(notifications, ['orderAt'], ['desc']);
+
+    notifications = _.orderBy(notifications, ['createdAt'], ['desc']);
     index = _.findIndex(notifications, { id: notification.id });
 
     if (notifications.length === 1) {
@@ -72,6 +124,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
 
     if (options.addLoadMore && !$loadMore.length && !isLastNotificationLoaded) {
       $loadMore = $(Fliplet.Widget.Templates['templates.loadMore']());
+
       $notifications.after($loadMore);
     }
 
@@ -89,20 +142,19 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
     }
 
     notifications[index] = notification;
+
     $('[data-notification-id="' + notification.id + '"]').replaceWith(html);
+
     Fliplet.Studio.emit('get-selected-widget');
   }
 
   function deleteNotification(notification) {
-    if (notification.isFirstBatch) {
-      // A deleted notification as part of the first batch will be ignored as it hasn't been cached to the notifications array nor rendered yet
-      return;
-    }
-
     _.remove(notifications, function(n) {
       return n.id === notification.id;
     });
+
     $('[data-notification-id="' + notification.id + '"]').remove();
+
     Fliplet.Studio.emit('get-selected-widget');
 
     if (!notifications.length) {
@@ -110,7 +162,12 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
     }
   }
 
-  function updateUnreadCount(count) {
+  function updateUnreadCount() {
+    var unreadNotifications = _.filter(notifications, function(notification) {
+      return !notification.deletedAt && !notification.readAt;
+    });
+    var count = unreadNotifications.length;
+
     if (!count || typeof count !== 'number') {
       $container.removeClass('notifications-has-unread');
       $container.find('.notifications-toolbar').html(Fliplet.Widget.Templates['templates.toolbar.empty']());
@@ -125,22 +182,51 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
 
     $container.addClass('notifications-has-unread');
     $container.find('.notifications-toolbar').html(html);
+
+    // Update app badge
+    Fliplet.Navigator.Notifications.setAppBadge(count);
+  }
+
+  function calculatePercentage(data) {
+    data = data || {};
+
+    var currentValue = data.value || 0;
+    var limit = data.threshold || 0;
+
+    return Math.round((currentValue / limit) * 100);
   }
 
   function processNotification(notification) {
-    if (notification.isLastNotification) {
-      isLastNotificationLoaded = true;
-      $loadMore.remove();
-      $loadMore = $([]);
-    }
-
     if (notification.status === 'draft') {
       return;
     }
 
-    if (notification.isDeleted) {
+    var source = notification.data.source;
+
+    if (source) {
+      notification.data.tags = _.uniq(_.concat(source, notification.data.tags || []));
+    }
+
+    notification.data.tags = _.map(notification.data.tags, function(tag) {
+      var type = 'info';
+      var name = tag;
+
+      if (tag === 'pricingLimitation') {
+        var percentage = calculatePercentage(notification.data);
+
+        name = notificationTags[source];
+        type = percentage >= 100 ? 'danger' : 'warning';
+      }
+
+      return {
+        name: name,
+        type: type
+      }
+    });
+
+    if (notification.deletedAt) {
       deleteNotification(notification);
-    } else if (notification.isUpdate) {
+    } else if (notification.updatedAt !== notification.createdAt) {
       updateNotification(notification);
     } else {
       addNotification(notification, {
@@ -161,7 +247,7 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
     }).join(',');
 
     // Update rendered notifications
-    $notifications.find(selector).removeClass('notification-unread').addClass('notification-read').find('.notification-badge').remove();
+    $notifications.find(selector).removeClass('notification-unread').addClass('notification-read');
   }
 
   function markAsRead(ids) {
@@ -173,41 +259,29 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
 
     ids = _.uniq(_.compact(ids));
 
-    if (isDemoMode) {
-      return Promise.resolve();
-    }
-
     _.forEach(notifications, function(n) {
       if (ids.indexOf(n.id) < 0) {
         return;
       }
 
-      arr.push(n);
+      arr.push(n.id);
     });
 
-    if (!appNotifications) {
-      return Promise.reject('Notifications add-on is not configured');
-    }
-
-    return appNotifications.markAsRead(arr);
+    return markNotificationsAsRead(arr);
   }
 
   function markAllUIAsRead() {
     // Update rendered notifications
     $notifications
-      .find('.notification-unread').removeClass('notification-unread').addClass('notification-read')
-      .find('.notification-badge').remove();
-
-    // Update unread count
-    updateUnreadCount(0);
+      .find('.notification-unread').removeClass('notification-unread').addClass('notification-read');
   }
 
   function markAllAsRead() {
-    if (!appNotifications) {
-      return Promise.reject('Notifications add-on is not configured');
-    }
+    var notificationIds = _.map(notifications, function(n) {
+      return n.id;
+    });
 
-    return appNotifications.markAllAsRead()
+    return markAsRead(notificationIds)
       .then(markAllUIAsRead)
       .catch(function(err) {
         Fliplet.UI.Toast.error(err, {
@@ -221,143 +295,111 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
       return Promise.reject('Notifications add-on is not configured');
     }
 
-    if (appNotifications.isPolling()) {
-      return Promise.resolve();
-    }
-
     var $target = $(target).addClass('loading');
 
-    return appNotifications.poll({
+    getUserNotifications({
       limit: BATCH_SIZE,
-      where: {
-        createdAt: {
-          $lt: _.min(_.map(notifications, 'createdAt'))
+      offset: notifications.length
+    })
+      .then(function(results) {
+        $target.removeClass('loading');
+
+        if (!results || !results.notifications) {
+          return;
         }
-      },
-      publishToStream: false
-    }).then(function(results) {
-      $target.removeClass('loading');
 
-      if (!results || !results.entries) {
-        return;
-      }
+        Fliplet.Analytics.trackEvent({
+          category: 'fv_notification_inbox',
+          action: 'fv_load_more',
+          value: results.notifications.length
+        });
 
-      Fliplet.Analytics.trackEvent({
-        category: 'notification_inbox',
-        action: 'load_more',
-        value: results.entries.length
+        if (!results.notifications.length) {
+          isLastNotificationLoaded = true;
+          $loadMore.remove();
+          $loadMore = $([]);
+
+          return;
+        }
+
+        results.notifications.forEach(function(notification) {
+          processNotification(notification);
+        });
+      })
+      .catch(function(err) {
+        $target.removeClass('loading');
+        Fliplet.UI.Toast.error(err, {
+          message: 'Error loading notifications'
+        });
       });
-
-      if (!results.entries.length) {
-        isLastNotificationLoaded = true;
-        $loadMore.remove();
-        $loadMore = $([]);
-
-        return;
-      }
-
-      results.entries.forEach(function(notification) {
-        processNotification(notification);
-      });
-    }).catch(function(err) {
-      $target.removeClass('loading');
-      Fliplet.UI.Toast.error(err, {
-        message: 'Error loading notifications'
-      });
-    });
   }
 
   function parseNotificationAction(id) {
     var notification = _.find(notifications, { id: id });
 
-    if (!notification || !_.has(notification, 'data.navigate')) {
+    if (notification && _.has(notification, 'data.navigate')) {
+      var navigate = notification.data.navigate;
+
+      Fliplet.Navigate.to(navigate);
+
       return;
     }
 
-    var navigate = notification.data.navigate;
-
-    Fliplet.Navigate.to(navigate);
+    // Tell user to use Fliplet Studio to open this notification's URL
+    Fliplet.UI.Toast({
+      type: 'regular',
+      position: 'top',
+      title: 'Opening a notification',
+      message: 'To open this notification\'s URL, please use Fliplet Studio and by clicking the bell icon in the top bar.'
+    });
   }
 
   function noNotificationsFound() {
     $('.notifications').html(Fliplet.Widget.Templates['templates.noNotifications']());
-    updateUnreadCount(0);
+
+    updateUnreadCount();
+
     Fliplet.Studio.emit('get-selected-widget');
   }
 
   function attachObservers() {
-    if (data.mode !== 'demo' || !Fliplet.App.isPreview(true)) {
-      Fliplet.Hooks.on('notificationFirstResponse', function(err, messages) {
-        if (err) {
-          $('.notifications').html(Fliplet.Widget.Templates['templates.notificationsError']());
-          Fliplet.UI.Toast.error(err, {
-            message: 'Error loading notifications'
-          });
-
-          return;
-        }
-
-        // Show "No notifications found" UI if there's no new or existing notifications
-        if (!_.filter(messages, function(message) {
-          return !message.deletedAt && message.status !== 'draft';
-        }).length && !notifications.length) {
-          noNotificationsFound();
-        }
-      });
-
-      Fliplet.Hooks.on('notificationStream', processNotification);
-
-      Fliplet.Hooks.on('notificationCountsUpdated', function(data) {
-        if (data && typeof data.unreadCount !== 'undefined') {
-          updateUnreadCount(data.unreadCount);
-        }
-      });
-
-      Fliplet.Hooks.on('notificationRead', function(data) {
-        data = data || {};
-
-        // Update unread markers
-        removeUnreadMarkers(data.ids);
-        // Update unread count
-        updateUnreadCount(data.unreadCount);
-      });
-    }
-
-    Fliplet.Hooks.on('afterNotificationsInit', function(instance) {
-      // Notifications have loaded
-      appNotifications = instance;
-    });
-
     $container
       .on('click', '.notification[data-notification-id]', function() {
         var id = $(this).data('notificationId');
 
         Fliplet.Analytics.trackEvent({
-          category: 'notification_inbox',
-          action: 'notification_open'
+          category: 'fv_notification_inbox',
+          action: 'fv_notification_open'
         });
-        markAsRead(id).then(function() {
-          parseNotificationAction(id);
-        }).catch(function() {
-          parseNotificationAction(id);
-        });
+
+        markAsRead(id)
+          .then(function() {
+            removeUnreadMarkers(id);
+            parseNotificationAction(id);
+          })
+          .catch(function() {
+            parseNotificationAction(id);
+          });
       })
       .on('click', '[data-read-all]', function(e) {
         e.preventDefault();
+
         Fliplet.Analytics.trackEvent({
-          category: 'notification_inbox',
-          action: 'notification_read_all'
+          category: 'fv_notification_inbox',
+          action: 'fv_notification_read_all'
         });
+
         markAllAsRead();
       })
       .on('click', '[data-load-more]', function(e) {
         e.preventDefault();
+
         loadMore(this);
       })
       .on('click', '[data-settings]', function() {
         Fliplet.Analytics.trackEvent({
-          category: 'notification_inbox',
-          action: 'notification_settings'
+          category: 'fv_notification_inbox',
+          action: 'fv_notification_settings'
         });
 
         if (_.hasIn(Fliplet, 'Notifications.Settings.open')) {
@@ -371,72 +413,12 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
       });
   }
 
-  function initDemo() {
-    var options = {
-      notifications: [{
-        data: {
-          title: 'Reminder',
-          message: 'You need to submit your full year review by tomorrow 2PM. Please speak to your manager if you have any questions.'
-        },
-        orderAt: moment().subtract(1, 'days').add(2, 'hours').valueOf()
-      }, {
-        data: {
-          title: 'Automated message',
-          message: 'It has been 14 days since you last emailed your pipeline contacts.'
-        },
-        orderAt: moment().subtract(8, 'days').valueOf()
-      }, {
-        data: {
-          title: 'Excellence in Marketing',
-          message: 'We have been awarded the prestigious "Excellent in Marketing" award by the National Marketing Association.'
-        },
-        orderAt: moment().subtract(1, 'month').valueOf()
-      }]
-    };
-
-    _.forEach(options.notifications, function(notification, i) {
-      if (i === 0) {
-        notification.isLastNotification = true;
-      } else {
-        notification.readStatus = true;
-      }
-    });
-
-    isDemoMode = true;
-    Fliplet.Hooks.run('beforeShowDemoNotifications', options).then(function() {
-      $container.addClass('demo');
-      _.forEach(options.notifications, function(notification, i) {
-        notification.id = i + 1;
-
-        processNotification(notification);
-      });
-      updateUnreadCount(_.filter(notifications, function(notification) {
-        return !notification.readStatus;
-      }).length);
-    });
-  }
-
-  function init(options) {
-    options = options || {};
-
+  function init() {
     moment.updateLocale('en', {
       calendar: {
         sameElse: 'MMMM Do YYYY'
       }
     });
-
-    if (options.mode === 'demo') {
-      initDemo();
-
-      return;
-    }
-
-    if (options.mode === 'empty') {
-      noNotificationsFound();
-      Fliplet.Studio.emit('get-selected-widget');
-
-      return;
-    }
 
     // Prompt user to enable notification or subscribe for push notification in the background
     var pushWidget = Fliplet.Widget.get('PushNotifications');
@@ -444,14 +426,45 @@ Fliplet.Registry.set('notification-inbox:1.0:core', function(element, data) {
     if (pushWidget) {
       pushWidget.ask();
     }
+
+    // Initialize notifications
+    getUserNotifications()
+      .then(function(results) {
+        var newNotifications = results && results.notifications || [];
+
+        Fliplet.Analytics.trackEvent({
+          category: 'fv_notification_inbox',
+          action: 'fv_init',
+          value: newNotifications.length
+        });
+
+        // Show "No notifications found" UI if there's no new or existing notifications
+        if (!_.filter(newNotifications, function(notification) {
+          return !notification.deletedAt && notification.status !== 'draft';
+        }).length && !notifications.length) {
+          noNotificationsFound();
+
+          return;
+        }
+
+        newNotifications.forEach(function(notification) {
+          processNotification(notification);
+        });
+
+        updateUnreadCount();
+      })
+      .catch(function(error) {
+        $('.notifications').html(Fliplet.Widget.Templates['templates.notificationsError']());
+
+        Fliplet.UI.Toast.error(error, {
+          message: 'Error loading notifications'
+        });
+      });
   }
 
   attachObservers();
 
   return {
-    init: init,
-    checkForUpdates: checkForUpdates,
-    markAllAsRead: markAllAsRead,
-    markAsRead: markAsRead
+    init: init
   };
 });
