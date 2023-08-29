@@ -101,7 +101,7 @@
   background-color: rgba(237, 145, 25, 0.2);
 }
 
-[data-fliplet-viewer-notification-inbox-1-0-0-id] .notification .tags .tag.alert {
+[data-fliplet-viewer-notification-inbox-1-0-0-id] .notification .tags .tag.danger {
   color: #e03629;
   background-color: rgba(224, 54, 41, 0.2);
 }

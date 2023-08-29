@@ -163,6 +163,7 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
   }
 
   function updateUnreadCount() {
+    // TODO: Update the notifications list to show the number of unread notifications correctly
     var unreadNotifications = _.filter(notifications, function(notification) {
       return !notification.deletedAt && !notification.readAt;
     });
