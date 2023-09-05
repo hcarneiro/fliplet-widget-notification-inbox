@@ -19,11 +19,9 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
       method: 'GET',
       url: 'v1/user/notifications',
       data: {
-        params: {
-          limit: options.limit || BATCH_SIZE,
-          offset: options.offset || notifications.length,
-          where: options.where ? JSON.stringify(options.where) : undefined
-        }
+        limit: options.limit || BATCH_SIZE,
+        offset: options.offset || notifications.length,
+        where: options.where ? JSON.stringify(options.where) : undefined
       }
     });
   }
@@ -39,7 +37,21 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
       data: {
         notificationIds: ids
       }
-    });
+    })
+      .then(function() {
+        // Update local notifications
+        notifications = _.map(notifications, function(notification) {
+          if (!!notification.readAt) {
+            return notification;
+          }
+
+          notification.readAt = new Date();
+
+          return notification;
+        });
+
+        return notifications;
+      });
   }
 
   function checkForUpdates() {
@@ -163,7 +175,6 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
   }
 
   function updateUnreadCount() {
-    // TODO: Update the notifications list to show the number of unread notifications correctly
     var unreadNotifications = _.filter(notifications, function(notification) {
       return !notification.deletedAt && !notification.readAt;
     });
@@ -249,6 +260,8 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
 
     // Update rendered notifications
     $notifications.find(selector).removeClass('notification-unread').addClass('notification-read');
+
+    updateUnreadCount();
   }
 
   function markAsRead(ids) {
@@ -275,6 +288,8 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
     // Update rendered notifications
     $notifications
       .find('.notification-unread').removeClass('notification-unread').addClass('notification-read');
+
+    updateUnreadCount();
   }
 
   function markAllAsRead() {
@@ -292,14 +307,9 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
   }
 
   function loadMore(target) {
-    if (!appNotifications) {
-      return Promise.reject('Notifications add-on is not configured');
-    }
-
     var $target = $(target).addClass('loading');
 
     getUserNotifications({
-      limit: BATCH_SIZE,
       offset: notifications.length
     })
       .then(function(results) {
