@@ -1,26 +1,23 @@
-var appSettingsBadgeType;
-
 function saveWidget() {
-  var saveAppSettings = Promise.resolve();
   var badgeType = $('[name="notificationsBadgeType"]:checked').val();
 
-  // Update app settings if the value has changed
-  if (badgeType && badgeType !== appSettingsBadgeType) {
-    saveAppSettings = Fliplet.App.Settings.set({
-      notificationsBadgeType: badgeType
+  return Fliplet.App.Settings.set({
+    notificationsBadgeType: badgeType
+  })
+    .then(function() {
+      return Fliplet.Widget.save({
+        notificationsBadgeType: badgeType
+      });
+    })
+    .then(function() {
+      return Fliplet.Widget.complete();
+    })
+    .catch(function(error) {
+      Fliplet.Modal.alert({
+        title: 'Error saving widget',
+        message: Fliplet.parseError(error)
+      });
     });
-  }
-
-  return saveAppSettings.then(function() {
-    return Fliplet.Widget.save();
-  }).then(function() {
-    return Fliplet.Widget.complete();
-  }).catch(function(error) {
-    Fliplet.Modal.alert({
-      title: 'Error saving widget',
-      message: Fliplet.parseError(error)
-    });
-  });
 }
 
 function attachObservers() {
