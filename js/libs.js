@@ -12,6 +12,14 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
     promotion: ['Promotion']
   };
 
+  /**
+   * @param {Object} options - The options for fetching notifications
+   * @param {Number} [options.limit] - The maximum number of notifications to fetch
+   * @param {Number} [options.offset] - The number of notifications to skip before fetching
+   * @param {Object} [options.where] - The where clause to filter notifications
+   * @returns {Promise<Object>} - A Promise that resolves with the fetched notifications
+   * @description Fetches notifications from the API
+   **/
   function getUserNotifications(options) {
     options = options || {};
 
@@ -26,6 +34,11 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
     });
   }
 
+  /**
+   * @param {Array<Number>} ids - The IDs of the notifications to mark as read
+   * @returns {Promise<Array<Object>>} - A Promise that resolves when the notifications have been marked as read
+   * @description Marks notifications as read
+   **/
   function markNotificationsAsRead(ids) {
     if (!Array.isArray(ids)) {
       ids = [ids];
@@ -41,7 +54,7 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
       .then(function() {
         // Update local notifications
         notifications = _.map(notifications, function(notification) {
-          if (!!notification.readAt) {
+          if (notification.readAt) {
             return notification;
           }
 
@@ -54,6 +67,10 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
       });
   }
 
+  /**
+   * @returns {Promise<Array<Object>>} - A Promise that resolves with the notifications
+   * @description Fetches new user's notifications
+   **/
   function checkForUpdates() {
     var $target = $('[data-refresh]');
 
@@ -95,6 +112,11 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
       });
   }
 
+  /**
+   * @param {Object} notification - The notification to render
+   * @returns {String} - The rendered notification template
+   * @description Renders a notification
+   **/
   function getNotificationRender(notification) {
     var tpl = Handlebars.compile(Fliplet.Widget.Templates['templates.notification']());
 
@@ -103,6 +125,13 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
     return tpl(notification);
   }
 
+  /**
+   * @param {Object} notification - The notification to add
+   * @param {Object} [options] - The options for adding a notification
+   * @param {Boolean} [options.addLoadMore] - Whether to add a load more button
+   * @description Adds a notification to the UI
+   * @returns {void}
+   **/
   function addNotification(notification, options) {
     options = options || {};
 
@@ -174,6 +203,10 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
     }
   }
 
+  /**
+   * @description Updates the unread count
+   * @returns {void}
+   **/
   function updateUnreadCount() {
     var unreadNotifications = _.filter(notifications, function(notification) {
       return !notification.deletedAt && !notification.readAt;
@@ -208,6 +241,11 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
     return Math.round((currentValue / limit) * 100);
   }
 
+  /**
+   * @param {Object} notification - The notification to process
+   * @description Processes a notification
+   * @returns {void}
+   **/
   function processNotification(notification) {
     if (notification.status === 'draft') {
       return;
@@ -233,7 +271,7 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
       return {
         name: name,
         type: type
-      }
+      };
     });
 
     if (notification.deletedAt) {
@@ -249,6 +287,11 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
     Fliplet.Studio.emit('get-selected-widget');
   }
 
+  /**
+   * @param {Array<Number>} ids - The IDs of the notifications to remove unread markers
+   * @description Removes unread markers from notifications
+   * @returns {void}
+   **/
   function removeUnreadMarkers(ids) {
     if (!Array.isArray(ids)) {
       ids = [ids];
@@ -292,6 +335,10 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
     updateUnreadCount();
   }
 
+  /**
+   * @description Marks all notifications as read
+   * @returns {Promise<Array<Object>>} - A Promise that resolves when the notifications have been marked as read
+   **/
   function markAllAsRead() {
     var notificationIds = _.map(notifications, function(n) {
       return n.id;
@@ -306,6 +353,11 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
       });
   }
 
+  /**
+   * @param {HTMLElement} target - The target element
+   * @description Loads more notifications
+   * @returns {void}
+   **/
   function loadMore(target) {
     var $target = $(target).addClass('loading');
 
@@ -345,6 +397,11 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
       });
   }
 
+  /**
+   * @param {Number} id - The ID of the notification to parse
+   * @description Parses a notification action
+   * @returns {void}
+   **/
   function parseNotificationAction(id) {
     var notification = _.find(notifications, { id: id });
 
