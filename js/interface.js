@@ -35,26 +35,10 @@ function attachObservers() {
   Fliplet.Widget.onSaveRequest(function() {
     return saveWidget();
   });
-
-  $('.manage-notifications').on('click', function(e) {
-    e.preventDefault();
-    Fliplet.Studio.emit('overlay', {
-      name: 'notifications',
-      options: {
-        appId: Fliplet.Env.get('appId'),
-        size: 'large',
-        title: 'Notifications',
-        classes: 'publish-option-overlay notifications-widget'
-      }
-    });
-  });
 }
 
 function init() {
-  var data = Fliplet.Widget.getData() || {};
   var badgeType = Fliplet.Env.get('appSettings').notificationsBadgeType;
-
-  appSettingsBadgeType = badgeType;
 
   if (['new', 'unread'].indexOf(badgeType) < 0) {
     badgeType = 'new';
