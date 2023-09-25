@@ -9,7 +9,7 @@ Fliplet.Widget.instance('fliplet-viewer-notification-inbox-1-0-0', function(data
   // Sample implementation to initialize the widget
   var inbox = new NotificationInbox(element, data);
 
-  Fliplet.Widget.register('FvNotificationInbox', function() {
+  Fliplet.Widget.register('FVNotificationInbox', function() {
     return inbox;
   });
 
