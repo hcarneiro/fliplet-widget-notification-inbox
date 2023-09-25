@@ -13,7 +13,6 @@
   },
   "build": {
     "dependencies": ["jquery", "bootstrap", "fliplet-session", "fliplet-notifications"],
-    "appAssets": ["css/app/build.css"],
     "assets": ["css/build.css", "js/libs.js", "js/build.templates.js", "js/build.js"]
   }
 }
