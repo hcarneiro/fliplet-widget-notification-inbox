@@ -251,20 +251,34 @@ Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(elem
       return;
     }
 
-    var source = notification.data.source;
+    var organizationLimits = ['unpublishedApps', 'publishedApps'];
+    var featureName = notification.data.featureName;
+    var source = organizationLimits.indexOf(featureName) > -1
+      ? 'organizationLimitation'
+      : notification.data.source;
 
+    notification.data.tags = notification.data.tags || [];
+    notification.data.type = notification.data.type || 'info'; // Can be 'info', 'warning', or 'danger'
+
+    // Add 'source' as a tag
     if (source) {
       notification.data.tags = _.uniq(_.concat(source, notification.data.tags || []));
     }
 
-    notification.data.tags = _.map(notification.data.tags, function(tag) {
-      var type = 'info';
-      var name = tag;
+    if (source === 'pricingLimitation' || source === 'organizationLimitation') {
+      var percentage = calculatePercentage(notification.data);
 
-      if (tag === 'pricingLimitation') {
+      notification.data.type = percentage >= 100 ? 'danger' : 'warning';
+    }
+
+    // Process the tags
+    notification.data.tags = _.map(notification.data.tags, (tag) => {
+      var type = 'info';  // Can be 'info', 'warning', or 'danger'
+      var name = notificationTags[source] || tag;
+
+      if (tag === 'pricingLimitation' || tag === 'organizationLimitation') {
         var percentage = calculatePercentage(notification.data);
 
-        name = notificationTags[source];
         type = percentage >= 100 ? 'danger' : 'warning';
       }
 
