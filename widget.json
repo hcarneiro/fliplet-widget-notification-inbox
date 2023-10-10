@@ -1,5 +1,5 @@
 {
-  "name": "Fliplet Viewer - Notification inbox",
+  "name": "Notification inbox for FV",
   "package": "com.fliplet.fvNotificationInbox",
   "version": "1.0.0",
   "icon": "img/icon.png",
@@ -12,7 +12,7 @@
     "assets": ["css/interface.css", "js/interface.js"]
   },
   "build": {
-    "dependencies": ["jquery", "bootstrap", "fliplet-session", "fliplet-notifications"],
+    "dependencies": ["jquery", "bootstrap"],
     "assets": ["css/build.css", "js/libs.js", "js/build.templates.js", "js/build.js"]
   }
 }
