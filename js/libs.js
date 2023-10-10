@@ -259,6 +259,8 @@ Fliplet.Registry.set('fv-notification-inbox:1.0:core', function(element) {
 
     notification.data.tags = notification.data.tags || [];
     notification.data.type = notification.data.type || 'info'; // Can be 'info', 'warning', or 'danger'
+    notification.data.customData = notification.data.customData || notification.data.custom && notification.data.custom.customData || {};
+    notification.data.hasActionData = _.has(notification, 'data.customData.action') || _.has(notification, 'data.navigate') || notification.hasLink;
 
     // Add 'source' as a tag
     if (source) {
@@ -419,10 +421,23 @@ Fliplet.Registry.set('fv-notification-inbox:1.0:core', function(element) {
   function parseNotificationAction(id) {
     var notification = _.find(notifications, { id: id });
 
-    if (notification && _.has(notification, 'data.navigate')) {
+    if (!notification) {
+      return;
+    }
+
+    var notificationAction = _.has(notification, 'data.customData.action') && notification.data.customData.action;
+    var hasURLAction = notificationAction === 'url';
+
+    if (_.has(notification, 'data.navigate')) {
       var navigate = notification.data.navigate;
 
       Fliplet.Navigate.to(navigate);
+
+      return;
+    }
+
+    if (hasURLAction) {
+      Fliplet.Navigate.url(notificationAction.url);
 
       return;
     }
@@ -431,8 +446,8 @@ Fliplet.Registry.set('fv-notification-inbox:1.0:core', function(element) {
     Fliplet.UI.Toast({
       type: 'regular',
       position: 'top',
-      title: 'Opening a notification',
-      message: 'To open this notification\'s URL, please use Fliplet Studio and by clicking the bell icon in the top bar.'
+      title: 'Opening a link to Fliplet Studio',
+      message: 'Open this link in Fliplet Studio by clicking on the same notification in the inbox.'
     });
   }
 
@@ -448,6 +463,7 @@ Fliplet.Registry.set('fv-notification-inbox:1.0:core', function(element) {
     $container
       .on('click', '.notification[data-notification-id]', function() {
         var id = $(this).data('notificationId');
+        var hasAction = $(this).hasClass('notification-linked');
 
         Fliplet.Analytics.trackEvent({
           category: 'fv_notification_inbox',
@@ -457,7 +473,10 @@ Fliplet.Registry.set('fv-notification-inbox:1.0:core', function(element) {
         markAsRead(id)
           .then(function() {
             removeUnreadMarkers(id);
-            parseNotificationAction(id);
+
+            if (hasAction) {
+              parseNotificationAction(id);
+            }
           })
           .catch(function() {
             parseNotificationAction(id);

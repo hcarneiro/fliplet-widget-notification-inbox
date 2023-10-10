@@ -1,5 +1,5 @@
 <div
-  class="notification \{{#if readAt}}notification-read\{{else}}notification-unread\{{/if}}\{{#if hasLink}} notification-linked\{{/if}} \{{data.type}}"
+  class="notification \{{#if readAt}}notification-read\{{else}}notification-unread\{{/if}}\{{#if data.hasActionData}} notification-linked\{{/if}} \{{data.type}}"
   data-notification-id="\{{id}}"
   data-notification-status="\{{status}}"
 >
