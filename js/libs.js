@@ -1,4 +1,4 @@
-Fliplet.Registry.set('fliplet-viewer-notification-inbox:1.0:core', function(element) {
+Fliplet.Registry.set('fv-notification-inbox:1.0:core', function(element) {
   var BATCH_SIZE = 20;
   var $container = $(element);
   var $notifications = $container.find('.notifications');
