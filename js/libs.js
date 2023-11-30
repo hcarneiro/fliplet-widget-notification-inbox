@@ -227,9 +227,6 @@ Fliplet.Registry.set('fv-notification-inbox:1.0:core', function(element) {
 
     $container.addClass('notifications-has-unread');
     $container.find('.notifications-toolbar').html(html);
-
-    // Update app badge
-    Fliplet.Navigator.Notifications.setAppBadge(count);
   }
 
   function calculatePercentage(data) {
