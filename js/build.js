@@ -13,7 +13,7 @@ Fliplet.Widget.instance('fv-notification-inbox-1-0-0', function(data) {
     return inbox;
   });
 
-  Fliplet().then(function() {
+  Fliplet.Hooks.on('beforeFvNotificationsInit', function() {
     // Initialize Notification Inbox component
     inbox.init();
   });
