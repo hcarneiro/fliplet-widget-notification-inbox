@@ -13,6 +13,7 @@
   },
   "build": {
     "dependencies": ["jquery", "bootstrap"],
+    "appAssets": ["js/app/libs.js", "js/app/build.js"],
     "assets": ["css/build.css", "js/libs.js", "js/build.templates.js", "js/build.js"]
   }
 }
