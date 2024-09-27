@@ -16,7 +16,7 @@ Fliplet().then(function() {
             return instance;
           });
 
-          Fliplet.Hooks.run('afterNotificationsInit', instance, counts);
+          Fliplet.Hooks.run('afterFvNotificationsInit', instance, counts);
         });
       }
     );

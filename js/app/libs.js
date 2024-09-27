@@ -63,6 +63,10 @@ Fliplet.Registry.set('fv-notification-inbox:1.0:app:core', function(data) {
     var affected;
     var unreadCount;
 
+    if (!Array.isArray(notificationsIds)) {
+      notificationsIds = [notificationsIds];
+    }
+
     return markNotificationsAsRead(notificationsIds)
       .then(function(results) {
         // Get the latest unread counts after a notification is read outside of the inbox
@@ -76,7 +80,7 @@ Fliplet.Registry.set('fv-notification-inbox:1.0:app:core', function(data) {
         unreadCount = Math.max(0, storage.unreadCount - affected);
 
         // Update the notification count cache
-        return Fliplet.Cache.set('appNotificationCount', [0, unreadCount])
+        return Fliplet.Cache.set('fvNotificationCount', [0, unreadCount])
           .then(function() {
             return saveCounts({
               newCount: 0,
@@ -98,6 +102,10 @@ Fliplet.Registry.set('fv-notification-inbox:1.0:app:core', function(data) {
             return data;
           });
       });
+  }
+
+  function markAllAsRead(notificationIds) {
+    return markAsRead(notificationIds);
   }
 
   function addNotificationBadges(count) {
@@ -150,8 +158,22 @@ Fliplet.Registry.set('fv-notification-inbox:1.0:app:core', function(data) {
       key: 'appNotificationsSeenAt',
       forceBackgroundUpdate: options.force
     }, function updateSession() {
+      let source;
+      const isSourceNative = Fliplet.Env.is('native');
+      const isFlipletViewerSubApp = isSourceNative && Fliplet.Env.get('appVersion') === '(DEV)';
+
+      if (isFlipletViewerSubApp) {
+        source = 'fliplet-viewer';
+      } else if (isSourceNative) {
+        source = 'native';
+      } else if (Fliplet.Env.is('web') && Fliplet.Env.get('mode') === 'view') {
+        source = 'web';
+      } else if (Fliplet.Env.is('web') && Fliplet.Env.get('mode') === 'preview') {
+        source = 'studio';
+      }
+
       return Fliplet.Session.set(
-        { appNotificationsSeenAt: options.seenAt },
+        { appNotificationsSeenAt: options.seenAt, source },
         { required: true }
       );
     });
@@ -204,12 +226,14 @@ Fliplet.Registry.set('fv-notification-inbox:1.0:app:core', function(data) {
       // Get notification counts (throttled at 20 seconds)
       return Fliplet.Cache.get({
         expire: 20,
-        key: 'appNotificationCount',
+        key: 'fvNotificationCount',
         forceBackgroundUpdate: forceFetch
       }, function fetchCounts() {
         var getNewCount = pageHasInbox
           ? Promise.resolve({ notifications: [] })
           : getUserNotifications({
+            limit: options.limit,
+            offset: options.offset,
             where: {
               createdAt: { $gt: lastClearedAt },
               readAt: { $eq: null }
@@ -219,6 +243,8 @@ Fliplet.Registry.set('fv-notification-inbox:1.0:app:core', function(data) {
         return Promise.all([
           getNewCount,
           getUserNotifications({
+            limit: options.limit,
+            offset: options.offset,
             where: {
               readAt: { $eq: null }
             }
@@ -314,6 +340,10 @@ Fliplet.Registry.set('fv-notification-inbox:1.0:app:core', function(data) {
       // Save the notification payload into storage for another page to process
       return Fliplet.Storage.set(pushNotificationStorageKey, payload);
     }
+
+    if (payload.action === 'url' && Fliplet.Navigate.isOnline()) {
+      Fliplet.Navigate.to(payload);
+    }
   }
 
   function init() {
@@ -359,9 +389,7 @@ Fliplet.Registry.set('fv-notification-inbox:1.0:app:core', function(data) {
     init: init,
     checkForUpdates: checkForUpdates,
     markAsRead: markAsRead,
-    addNotificationBadges: addNotificationBadges,
-    setAppNotificationSeenAt: setAppNotificationSeenAt,
-    getLatestNotificationCounts: getLatestNotificationCounts,
-    saveCounts: saveCounts
+    markAllAsRead: markAllAsRead,
+    setAppNotificationSeenAt: setAppNotificationSeenAt
   };
 });

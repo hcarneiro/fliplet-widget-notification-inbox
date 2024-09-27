@@ -14,6 +14,8 @@ Fliplet.Widget.instance('fv-notification-inbox-1-0-0', function(data) {
   });
 
   Fliplet.Hooks.on('beforeFvNotificationsInit', function() {
+    $(element).translate();
+
     // Initialize Notification Inbox component
     inbox.init();
   });
