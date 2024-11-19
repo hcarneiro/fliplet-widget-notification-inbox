@@ -1,4 +1,4 @@
-Fliplet.Registry.set('fv-notification-inbox:1.0:app:core', function(data) {
+Fliplet.Registry.set('fv-notification-inbox:1.0:app:core', function() {
   var BATCH_SIZE = 20;
 
   var storageKey = 'flFvAppNotifications';
@@ -233,7 +233,6 @@ Fliplet.Registry.set('fv-notification-inbox:1.0:app:core', function(data) {
           ? Promise.resolve({ notifications: [] })
           : getUserNotifications({
             limit: options.limit,
-            offset: options.offset,
             where: {
               createdAt: { $gt: lastClearedAt },
               readAt: { $eq: null }
